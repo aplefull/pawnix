@@ -25,6 +25,7 @@ const INITIAL_STATE = {
   adjectives: ADJECTIVES,
   guess: null,
   scores: { One: 0, Two: 0 },
+  scored: false,
 };
 
 let env: RulesTestEnvironment;
@@ -203,6 +204,41 @@ describe('guessing', () => {
   });
 });
 
+describe('scoring', () => {
+  const revealed = { phase: 'reveal', guess: [2, 0, 4, 3, 1] };
+
+  beforeEach(async () => {
+    await seed(revealed, { One: { round: 1, pairing: PAIRING } });
+  });
+
+  it('lets either player score the revealed round once', async () => {
+    await assertSucceeds(play('bob', { scores: { One: 0, Two: 3 }, scored: true }));
+    await assertFails(play('alice', { scores: { One: 0, Two: 6 }, scored: true }));
+
+    await seed(revealed);
+    await assertSucceeds(play('alice', { scores: { One: 0, Two: 3 }, scored: true }));
+  });
+
+  it('only lets the guesser gain zero to five points', async () => {
+    await assertFails(play('alice', { scores: { One: 1, Two: 3 }, scored: true }));
+    await assertFails(play('alice', { scores: { One: 0, Two: 6 }, scored: true }));
+    await assertFails(play('alice', { scores: { One: 0, Two: -1 }, scored: true }));
+    await assertSucceeds(play('alice', { scores: { One: 0, Two: 0 }, scored: true }));
+  });
+
+  it('requires marking the round scored and nothing else', async () => {
+    await assertFails(play('alice', { scores: { One: 0, Two: 3 } }));
+    await assertFails(play('alice', { scores: { One: 0, Two: 3 }, scored: true, guess: PAIRING }));
+  });
+
+  it('does not allow scoring before the reveal or by outsiders', async () => {
+    await assertFails(play('carol', { scores: { One: 0, Two: 3 }, scored: true }));
+
+    await seed({ phase: 'guessing' }, { One: { round: 1, pairing: PAIRING } });
+    await assertFails(play('alice', { scores: { One: 0, Two: 3 }, scored: true }));
+  });
+});
+
 describe('next round', () => {
   const nextRound = {
     phase: 'matching',
@@ -211,31 +247,36 @@ describe('next round', () => {
     nouns: ['Penguin', 'Noodle', 'Sock', 'Raven', 'Pickle'],
     adjectives: ['Sleepy', 'Sticky', 'Wobbly', 'Murky', 'Jolly'],
     guess: null,
-    scores: { One: 0, Two: 3 },
+    scored: false,
   };
 
+  const scoredReveal = { phase: 'reveal', guess: [2, 0, 4, 3, 1], scores: { One: 0, Two: 3 }, scored: true };
+
   beforeEach(async () => {
-    await seed({ phase: 'reveal', guess: [2, 0, 4, 3, 1] }, { One: { round: 1, pairing: PAIRING } });
+    await seed(scoredReveal, { One: { round: 1, pairing: PAIRING } });
   });
 
   it('lets either player start the next round with swapped roles', async () => {
     await assertSucceeds(play('alice', nextRound));
-    await seed({ phase: 'reveal', guess: [2, 0, 4, 3, 1] });
+    await seed(scoredReveal);
     await assertSucceeds(play('bob', nextRound));
   });
 
-  it('only lets the guesser gain zero to five points', async () => {
-    await assertFails(play('alice', { ...nextRound, scores: { One: 1, Two: 3 } }));
-    await assertFails(play('alice', { ...nextRound, scores: { One: 0, Two: 6 } }));
-    await assertFails(play('alice', { ...nextRound, scores: { One: 0, Two: -1 } }));
-    await assertSucceeds(play('alice', { ...nextRound, scores: { One: 0, Two: 0 } }));
+  it('waits until the round is scored', async () => {
+    await seed({ ...scoredReveal, scores: { One: 0, Two: 0 }, scored: false });
+    await assertFails(play('alice', nextRound));
   });
 
-  it('requires swapped roles, a new round number and a clean guess', async () => {
+  it('does not touch scores', async () => {
+    await assertFails(play('alice', { ...nextRound, scores: { One: 0, Two: 8 } }));
+  });
+
+  it('requires swapped roles, a new round number, a clean guess and an unscored round', async () => {
     await assertFails(play('alice', { ...nextRound, matcher: 'One' }));
     await assertFails(play('alice', { ...nextRound, round: 3 }));
     await assertFails(play('alice', { ...nextRound, guess: PAIRING }));
     await assertFails(play('alice', { ...nextRound, nouns: NOUNS.slice(0, 3) }));
+    await assertFails(play('alice', { ...nextRound, scored: true }));
   });
 
   it('does not let outsiders advance the game', async () => {
@@ -243,19 +284,37 @@ describe('next round', () => {
   });
 
   it('finishes instead of starting a new round after the last one', async () => {
-    await seed({ round: 4, matcher: 'Two', phase: 'reveal', guess: PAIRING, scores: { One: 6, Two: 4 } });
+    await seed({
+      round: 4,
+      matcher: 'Two',
+      phase: 'reveal',
+      guess: PAIRING,
+      scores: { One: 11, Two: 4 },
+      scored: true,
+    });
     await assertFails(play('alice', { ...nextRound, round: 5, matcher: 'One' }));
-    await assertSucceeds(play('alice', { phase: 'finished', scores: { One: 11, Two: 4 } }));
+    await assertFails(play('alice', { phase: 'finished', scores: { One: 12, Two: 4 } }));
+    await assertSucceeds(play('alice', { phase: 'finished' }));
   });
 
-  it('does not finish early', async () => {
-    await assertFails(play('alice', { phase: 'finished', scores: { One: 0, Two: 3 } }));
+  it('does not finish early or before scoring', async () => {
+    await assertFails(play('alice', { phase: 'finished' }));
+
+    await seed({ round: 4, matcher: 'Two', phase: 'reveal', guess: PAIRING, scores: { One: 6, Two: 4 } });
+    await assertFails(play('alice', { phase: 'finished' }));
   });
 });
 
 describe('rematch', () => {
   it('lets either player restart a finished game with the same settings', async () => {
-    await seed({ round: 4, matcher: 'Two', phase: 'finished', guess: PAIRING, scores: { One: 11, Two: 4 } });
+    await seed({
+      round: 4,
+      matcher: 'Two',
+      phase: 'finished',
+      guess: PAIRING,
+      scores: { One: 11, Two: 4 },
+      scored: true,
+    });
     await assertSucceeds(updateDoc(room('bob'), { state: INITIAL_STATE }));
   });
 
@@ -263,7 +322,14 @@ describe('rematch', () => {
     await seed({ phase: 'reveal', guess: PAIRING });
     await assertFails(updateDoc(room('alice'), { state: INITIAL_STATE }));
 
-    await seed({ round: 4, matcher: 'Two', phase: 'finished', guess: PAIRING, scores: { One: 11, Two: 4 } });
+    await seed({
+      round: 4,
+      matcher: 'Two',
+      phase: 'finished',
+      guess: PAIRING,
+      scores: { One: 11, Two: 4 },
+      scored: true,
+    });
     await assertFails(updateDoc(room('alice'), { state: { ...INITIAL_STATE, language: 'ru' } }));
     await assertFails(updateDoc(room('alice'), { state: { ...INITIAL_STATE, totalRounds: 2 } }));
   });

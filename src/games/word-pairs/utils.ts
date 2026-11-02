@@ -41,6 +41,7 @@ export const createInitialState = (language: Language, totalRounds: number): Gam
     ...dealWords(language),
     guess: null,
     scores: { One: 0, Two: 0 },
+    scored: false,
   };
 };
 
@@ -48,21 +49,27 @@ export const countCorrect = (pairing: number[], guess: number[]) => {
   return pairing.filter((adjective, noun) => guess[noun] === adjective).length;
 };
 
-export const getNextRoundState = (state: GameState, pairing: number[]): Partial<GameState> => {
+export const getScoredState = (state: GameState, pairing: number[]): Partial<GameState> => {
   const guesser = getGuesser(state);
-  const scores = { ...state.scores, [guesser]: state.scores[guesser] + countCorrect(pairing, state.guess ?? []) };
 
+  return {
+    scores: { ...state.scores, [guesser]: state.scores[guesser] + countCorrect(pairing, state.guess ?? []) },
+    scored: true,
+  };
+};
+
+export const getNextRoundState = (state: GameState): Partial<GameState> => {
   if (state.round >= state.totalRounds) {
-    return { phase: PHASES.FINISHED, scores };
+    return { phase: PHASES.FINISHED };
   }
 
   return {
     phase: PHASES.MATCHING,
     round: state.round + 1,
-    matcher: guesser,
+    matcher: getGuesser(state),
     ...dealWords(state.language),
     guess: null,
-    scores,
+    scored: false,
   };
 };
 

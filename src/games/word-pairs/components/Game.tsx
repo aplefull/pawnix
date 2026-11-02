@@ -1,9 +1,9 @@
 // LIBRARIES
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/shallow';
 // STORE
 import type { Seats } from '@store';
-import { startNextRound, submitGuess, submitPairing, useWordPairs } from '../store';
+import { scoreRound, startNextRound, submitGuess, submitPairing, useWordPairs } from '../store';
 // HOOKS
 import { useLive, usePublishLive } from '@hooks';
 import { useSecret } from '../hooks';
@@ -35,6 +35,7 @@ type TRoundProps = {
   nouns: string[];
   adjectives: string[];
   guess: number[] | null;
+  scored: boolean;
   synced: boolean;
 };
 
@@ -52,6 +53,7 @@ const Round = ({
   nouns,
   adjectives,
   guess,
+  scored,
   synced,
 }: TRoundProps) => {
   const [pairing, setPairing] = useState<Pairing>(EMPTY_PAIRING);
@@ -83,6 +85,12 @@ const Round = ({
   const watched = useLive<Live>(roomId, isWatching ? players[watchedSeat] : null);
   const livePairing = watched?.round === round && watched.phase === phase ? decodePicks(watched.picks) : EMPTY_PAIRING;
   const liveCount = livePairing.filter(notNull).length;
+
+  useEffect(() => {
+    if (phase !== PHASES.REVEAL || scored || !secret) return;
+
+    scoreRound(secret.pairing).catch(() => {});
+  }, [phase, scored, secret]);
 
   const run = (action: () => Promise<void>) => async () => {
     setSubmitting(true);
@@ -187,7 +195,7 @@ const Round = ({
         guesserName={isMatcher ? guesserName : 'You'}
       />
       {error && <p className={styles.error}>{error}</p>}
-      <Button size="lg" fullWidth disabled={submitting} onClick={handleNextRound}>
+      <Button size="lg" fullWidth disabled={!scored || submitting} onClick={handleNextRound}>
         {isLastRound ? 'See results' : 'Next round'}
       </Button>
     </Panel>
@@ -209,6 +217,7 @@ export const Game = () => {
       adjectives: state.adjectives,
       guess: state.guess,
       scores: state.scores,
+      scored: state.scored,
       synced: state.synced,
     }))
   );

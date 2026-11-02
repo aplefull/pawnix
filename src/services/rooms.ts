@@ -130,12 +130,6 @@ export const updateRoomState = <TState extends object>(roomId: string, patch: Pa
   return updateDoc(getRoomRef(roomId), toStateUpdate(patch));
 };
 
-export const fetchSecret = async <TSecret>(roomId: string, seat: string) => {
-  const docSnap = await getDoc(getSecretRef(roomId, seat));
-
-  return docSnap.exists() ? (docSnap.data() as TSecret) : null;
-};
-
 export const subscribeSecret = <TSecret>(
   roomId: string,
   seat: string,

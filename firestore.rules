@@ -198,7 +198,7 @@ service cloud.firestore {
       }
 
       function wordPairsStateKeys() {
-        return ['language', 'totalRounds', 'round', 'phase', 'matcher', 'nouns', 'adjectives', 'guess', 'scores'];
+        return ['language', 'totalRounds', 'round', 'phase', 'matcher', 'nouns', 'adjectives', 'guess', 'scores', 'scored'];
       }
 
       function wordPairsGuesser(state) {
@@ -224,7 +224,8 @@ service cloud.firestore {
           && wordPairsIsWords(state.nouns)
           && wordPairsIsWords(state.adjectives)
           && state.guess == null
-          && state.scores == { 'One': 0, 'Two': 0 };
+          && state.scores == { 'One': 0, 'Two': 0 }
+          && state.scored == false;
       }
 
       function wordPairsIsSubmittingPairing(players, before, after) {
@@ -255,25 +256,34 @@ service cloud.firestore {
           && after.scores[guesser] <= before.scores[guesser] + 5;
       }
 
+      function wordPairsIsScoring(before, after) {
+        return before.phase == 'reveal'
+          && before.scored == false
+          && after.diff(before).affectedKeys().hasOnly(['scores', 'scored'])
+          && after.scored == true
+          && wordPairsIsScored(before, after);
+      }
+
       function wordPairsIsNextRound(before, after) {
         return before.phase == 'reveal'
+          && before.scored == true
           && before.round < before.totalRounds
-          && after.diff(before).affectedKeys().hasOnly(['phase', 'round', 'matcher', 'nouns', 'adjectives', 'guess', 'scores'])
+          && after.diff(before).affectedKeys().hasOnly(['phase', 'round', 'matcher', 'nouns', 'adjectives', 'guess', 'scored'])
           && after.phase == 'matching'
           && after.round == before.round + 1
           && after.matcher == wordPairsGuesser(before)
           && wordPairsIsWords(after.nouns)
           && wordPairsIsWords(after.adjectives)
           && after.guess == null
-          && wordPairsIsScored(before, after);
+          && after.scored == false;
       }
 
       function wordPairsIsFinishing(before, after) {
         return before.phase == 'reveal'
+          && before.scored == true
           && before.round == before.totalRounds
-          && after.diff(before).affectedKeys().hasOnly(['phase', 'scores'])
-          && after.phase == 'finished'
-          && wordPairsIsScored(before, after);
+          && after.diff(before).affectedKeys().hasOnly(['phase'])
+          && after.phase == 'finished';
       }
 
       function wordPairsIsRematch(before, after) {
@@ -286,6 +296,7 @@ service cloud.firestore {
       function wordPairsIsUpdate(players, before, after) {
         return wordPairsIsSubmittingPairing(players, before, after)
           || wordPairsIsGuessing(players, before, after)
+          || wordPairsIsScoring(before, after)
           || wordPairsIsNextRound(before, after)
           || wordPairsIsFinishing(before, after)
           || wordPairsIsRematch(before, after);

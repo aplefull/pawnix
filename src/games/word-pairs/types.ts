@@ -19,6 +19,7 @@ export type GameState = {
   adjectives: string[];
   guess: number[] | null;
   scores: Scores;
+  scored: boolean;
 };
 
 export type Secret = {

@@ -7,6 +7,7 @@ import {
   encodePicks,
   getNextRoundState,
   getRematchState,
+  getScoredState,
 } from '../src/games/word-pairs/utils';
 import { WORDS } from '../src/games/word-pairs/words';
 
@@ -34,12 +35,24 @@ describe('word pairs logic', () => {
     expect(countCorrect([2, 0, 4, 1, 3], [0, 1, 2, 3, 4])).toBe(0);
   });
 
-  it('scores the guesser, swaps roles and deals new words for the next round', () => {
+  it('adds the correct pairs to the guesser and marks the round scored', () => {
     const state = { ...createInitialState('en', 4), phase: 'reveal' as const, guess: [2, 0, 4, 3, 1] };
-    const next = getNextRoundState(state, [2, 0, 4, 1, 3]);
 
-    expect(next).toMatchObject({ phase: 'matching', round: 2, matcher: 'Two', guess: null });
-    expect(next.scores).toEqual({ One: 0, Two: 3 });
+    expect(getScoredState(state, [2, 0, 4, 1, 3])).toEqual({ scores: { One: 0, Two: 3 }, scored: true });
+  });
+
+  it('swaps roles and deals new words for the next round without touching scores', () => {
+    const state = {
+      ...createInitialState('en', 4),
+      phase: 'reveal' as const,
+      guess: [2, 0, 4, 3, 1],
+      scores: { One: 0, Two: 3 },
+      scored: true,
+    };
+    const next = getNextRoundState(state);
+
+    expect(next).toMatchObject({ phase: 'matching', round: 2, matcher: 'Two', guess: null, scored: false });
+    expect(next.scores).toBeUndefined();
     expect(next.nouns).toHaveLength(5);
   });
 
@@ -50,10 +63,11 @@ describe('word pairs logic', () => {
       matcher: 'Two' as const,
       phase: 'reveal' as const,
       guess: [0, 1, 2, 3, 4],
-      scores: { One: 0, Two: 4 },
+      scores: { One: 5, Two: 4 },
+      scored: true,
     };
 
-    expect(getNextRoundState(state, [0, 1, 2, 3, 4])).toEqual({ phase: 'finished', scores: { One: 5, Two: 4 } });
+    expect(getNextRoundState(state)).toEqual({ phase: 'finished' });
   });
 
   it('encodes live picks and hides the matcher pairs', () => {

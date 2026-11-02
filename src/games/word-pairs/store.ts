@@ -1,10 +1,10 @@
 // STORE
 import { type RoomStore, type Seats, useRoomStore } from '@store';
 // SERVICES
-import { fetchSecret, resetRoomState, updateRoomState, updateRoomStateWithSecret } from '@services';
+import { resetRoomState, updateRoomState, updateRoomStateWithSecret } from '@services';
 // UTILS
 import { logger } from '@utils';
-import { createInitialState, getNextRoundState, getRematchState } from './utils';
+import { createInitialState, getNextRoundState, getRematchState, getScoredState } from './utils';
 // CONSTANTS
 import { DEFAULT_ROUNDS, PHASES, SEATS } from './constants';
 // TYPES
@@ -61,6 +61,14 @@ export const submitGuess = async (guess: number[]) => {
   await updateRoomState<GameState>(roomId, { phase: PHASES.REVEAL, guess });
 };
 
+export const scoreRound = async (pairing: number[]) => {
+  const view = getView();
+
+  if (!view.roomId || view.phase !== PHASES.REVEAL || view.scored) return;
+
+  await updateRoomState<GameState>(view.roomId, getScoredState(toGameState(view), pairing));
+};
+
 export const startNextRound = async () => {
   const view = getView();
 
@@ -69,11 +77,9 @@ export const startNextRound = async () => {
     return;
   }
 
-  const secret = await fetchSecret<Secret>(view.roomId, view.matcher);
+  if (view.phase !== PHASES.REVEAL || !view.scored) return;
 
-  if (!secret || secret.round !== view.round || getView().phase !== PHASES.REVEAL) return;
-
-  await updateRoomState<GameState>(view.roomId, getNextRoundState(toGameState(view), secret.pairing));
+  await updateRoomState<GameState>(view.roomId, getNextRoundState(toGameState(view)));
 };
 
 export const restartGame = async () => {
