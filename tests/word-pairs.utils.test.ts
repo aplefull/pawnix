@@ -3,6 +3,8 @@ import {
   countCorrect,
   createInitialState,
   dealWords,
+  decodePicks,
+  encodePicks,
   getNextRoundState,
   getRematchState,
 } from '../src/games/word-pairs/utils';
@@ -52,6 +54,13 @@ describe('word pairs logic', () => {
     };
 
     expect(getNextRoundState(state, [0, 1, 2, 3, 4])).toEqual({ phase: 'finished', scores: { One: 5, Two: 4 } });
+  });
+
+  it('encodes live picks and hides the matcher pairs', () => {
+    expect(encodePicks([2, 0, null, 4, null], false)).toBe('20-4-');
+    expect(encodePicks([2, 0, null, 4, null], true)).toBe('**-*-');
+    expect(decodePicks('20-4-')).toEqual([2, 0, null, 4, null]);
+    expect(decodePicks('**-*-')).toEqual([-1, -1, null, -1, null]);
   });
 
   it('keeps the settings for a rematch', () => {

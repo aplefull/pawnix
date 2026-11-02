@@ -25,3 +25,11 @@ export type Secret = {
   round: number;
   pairing: number[];
 };
+
+export type Pairing = (number | null)[];
+
+export type Live = {
+  round: number;
+  phase: Phase;
+  picks: string;
+};

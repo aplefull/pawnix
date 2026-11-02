@@ -4,7 +4,17 @@ import { shuffle } from '@utils';
 import { PHASES, SEATS, WORDS_PER_ROUND } from './constants';
 import { WORDS } from './words';
 // TYPES
-import type { GameState, Language, Seat } from './types';
+import type { GameState, Language, Pairing, Seat } from './types';
+
+export const HIDDEN_PAIR = -1;
+
+export const encodePicks = (pairing: Pairing, conceal: boolean) => {
+  return pairing.map((value) => (value === null ? '-' : conceal ? '*' : String(value))).join('');
+};
+
+export const decodePicks = (picks: string): Pairing => {
+  return [...picks].map((char) => (char === '-' ? null : char === '*' ? HIDDEN_PAIR : Number(char)));
+};
 
 export const getOtherSeat = (seat: Seat): Seat => {
   return seat === SEATS[0] ? SEATS[1] : SEATS[0];

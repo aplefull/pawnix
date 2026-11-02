@@ -1,30 +1,32 @@
 // LIBRARIES
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useShallow } from 'zustand/shallow';
 // STORE
 import type { Seats } from '@store';
 import { startNextRound, submitGuess, submitPairing, useWordPairs } from '../store';
 // HOOKS
+import { useLive, usePublishLive } from '@hooks';
 import { useSecret } from '../hooks';
 // COMPONENTS
 import { Button, Panel, Spinner, WaitingPanel } from '@components';
 import { EndScreen } from './EndScreen';
-import { type Pairing, PairingBoard } from './PairingBoard';
+import { PairingBoard } from './PairingBoard';
 import { RevealList } from './RevealList';
 import { Scoreboard } from './Scoreboard';
 // UTILS
 import { isRoomFull, logger, notNull } from '@utils';
-import { countCorrect, getOtherSeat } from '../utils';
+import { countCorrect, decodePicks, encodePicks, getOtherSeat } from '../utils';
 // CONSTANTS
 import { PHASES, WORDS_PER_ROUND } from '../constants';
 // TYPES
-import type { Phase, Seat } from '../types';
+import type { Live, Pairing, Phase, Seat } from '../types';
 // STYLES
 import styles from '@styles/games/word-pairs/game.module.scss';
 
 type TRoundProps = {
   roomId: string;
   seat: Seat;
+  players: Seats;
   names: Seats;
   round: number;
   totalRounds: number;
@@ -41,6 +43,7 @@ const EMPTY_PAIRING: Pairing = Array.from({ length: WORDS_PER_ROUND }, () => nul
 const Round = ({
   roomId,
   seat,
+  players,
   names,
   round,
   totalRounds,
@@ -65,6 +68,21 @@ const Round = ({
   const secret = useSecret(roomId, secretSeat, round);
 
   const isComplete = pairing.every(notNull);
+
+  const isPicking = (phase === PHASES.MATCHING && isMatcher) || (phase === PHASES.GUESSING && !isMatcher);
+  const watchedSeat = phase === PHASES.MATCHING ? matcher : guesser;
+  const isWatching = !isPicking && (phase === PHASES.MATCHING || phase === PHASES.GUESSING);
+
+  const ownLive = useMemo<Live | null>(
+    () => (isPicking ? { round, phase, picks: encodePicks(pairing, isMatcher) } : null),
+    [isPicking, round, phase, pairing, isMatcher]
+  );
+
+  usePublishLive(roomId, isPicking ? players[seat] : null, ownLive);
+
+  const watched = useLive<Live>(roomId, isWatching ? players[watchedSeat] : null);
+  const livePairing = watched?.round === round && watched.phase === phase ? decodePicks(watched.picks) : EMPTY_PAIRING;
+  const liveCount = livePairing.filter(notNull).length;
 
   const run = (action: () => Promise<void>) => async () => {
     setSubmitting(true);
@@ -99,8 +117,10 @@ const Round = ({
   if (phase === PHASES.MATCHING) {
     return (
       <Panel className={styles.table}>
-        <h2 className={styles.title}>{matcherName} is pairing the words...</h2>
-        <PairingBoard nouns={nouns} adjectives={adjectives} pairing={EMPTY_PAIRING} />
+        <h2 className={styles.title}>
+          {matcherName} is pairing the words... {liveCount}/{WORDS_PER_ROUND}
+        </h2>
+        <PairingBoard nouns={nouns} adjectives={adjectives} pairing={livePairing} />
       </Panel>
     );
   }
@@ -121,8 +141,22 @@ const Round = ({
   if (phase === PHASES.GUESSING) {
     return (
       <Panel className={styles.table}>
-        <h2 className={styles.title}>{guesserName} is guessing...</h2>
-        <PairingBoard nouns={nouns} adjectives={adjectives} pairing={secret?.pairing ?? EMPTY_PAIRING} />
+        <h2 className={styles.title}>
+          {guesserName} is guessing... {liveCount}/{WORDS_PER_ROUND}
+        </h2>
+        {secret ? (
+          <RevealList
+            nouns={nouns}
+            adjectives={adjectives}
+            pairing={secret.pairing}
+            guess={livePairing}
+            guesserName={guesserName}
+          />
+        ) : (
+          <div className={styles.loading}>
+            <Spinner />
+          </div>
+        )}
       </Panel>
     );
   }

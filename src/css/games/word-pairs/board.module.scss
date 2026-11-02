@@ -68,6 +68,12 @@
   font-weight: 600;
 }
 
+.paired .slot.hidden {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
 .noun-word {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -141,4 +147,8 @@
 
 .wrong .verdict {
   color: var(--color-danger);
+}
+
+.pending {
+  color: var(--color-text-faint);
 }

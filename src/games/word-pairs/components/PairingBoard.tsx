@@ -1,10 +1,18 @@
 // LIBRARIES
 import cx from 'clsx';
 import { memo, useState } from 'react';
+// UTILS
+import { HIDDEN_PAIR } from '../utils';
+// TYPES
+import type { Pairing } from '../types';
 // STYLES
 import styles from '@styles/games/word-pairs/board.module.scss';
 
-export type Pairing = (number | null)[];
+const getSlotText = (adjective: number | null, adjectives: string[]) => {
+  if (adjective === null) return '?';
+  if (adjective === HIDDEN_PAIR) return 'paired';
+  return adjectives[adjective];
+};
 
 type TPairingBoardProps = {
   nouns: string[];
@@ -72,7 +80,9 @@ export const PairingBoard = memo(({ nouns, adjectives, pairing, onChange }: TPai
                 aria-pressed={selected === index}
                 onClick={handleNounClick(index)}
               >
-                <span className={styles.slot}>{adjective === null ? '?' : adjectives[adjective]}</span>
+                <span className={cx(styles.slot, { [styles.hidden]: adjective === HIDDEN_PAIR })}>
+                  {getSlotText(adjective, adjectives)}
+                </span>
                 <span className={styles.nounWord}>{noun}</span>
               </button>
             </li>
