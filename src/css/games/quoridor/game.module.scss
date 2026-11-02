@@ -13,12 +13,6 @@
   position: relative;
 }
 
-.loader {
-  display: grid;
-  place-items: center;
-  height: var(--board-size);
-}
-
 .overlay {
   position: absolute;
   inset: 0;
@@ -46,10 +40,4 @@
 
 .result-text {
   color: var(--color-text-muted);
-}
-
-.waiting {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
 }

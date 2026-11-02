@@ -18,8 +18,10 @@ export const ROOM_CODE_ATTEMPTS = 5;
 
 export const ROOM_TTL_DAYS = 7;
 
+export const SITE_NAME = 'Board Games';
+
 export const MENU_STATES = {
   INITIAL: 'INITIAL',
-  SELECT_PLAYER: 'SELECT_PLAYER',
+  CREATE_ROOM: 'CREATE_ROOM',
   JOIN_ROOM: 'JOIN_ROOM',
 } as const;

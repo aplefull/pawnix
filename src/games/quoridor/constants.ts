@@ -84,10 +84,6 @@ export const PLAYFIELD_INITIAL_STATE = [
 
 export const PLAYFIELD_SIZE = PLAYFIELD_INITIAL_STATE.length - 1;
 
-export const GAME_ID = 'quoridor';
-
-export const SEATS = [PLAYERS.PLAYER_1, PLAYERS.PLAYER_2] as const;
-
 export const EMPTY_SEATS: Players = { [PLAYERS.PLAYER_1]: null, [PLAYERS.PLAYER_2]: null };
 
 export const INITIAL_GAME_STATE: GameState = {
