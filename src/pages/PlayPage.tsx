@@ -1,11 +1,11 @@
 // LIBRARIES
 import { Suspense } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Await, useLoaderData } from 'react-router';
-// REDUX
-import { type Player, restartGame, type AppDispatch, type RootState } from '@redux';
+import { useShallow } from 'zustand/shallow';
+// STORE
+import { type Player, useGameStore } from '@store';
 // UTILS
-import { isCurrentPlayerTurn, logger } from '@utils';
+import { getOpponent, isCurrentPlayerTurn, logger } from '@utils';
 // COMPONENTS
 import { Button, Gif, Panel, PlayerBar, Playfield, Spinner } from '@components';
 // CONSTANTS
@@ -19,11 +19,11 @@ type TEndScreenProps = {
 };
 
 const EndScreen = ({ winner, player }: TEndScreenProps) => {
-  const dispatch = useDispatch<AppDispatch>();
+  const restartGame = useGameStore((state) => state.restartGame);
   const isWinner = winner === player;
 
   const handleRestart = () => {
-    dispatch(restartGame());
+    restartGame();
   };
 
   return (
@@ -41,11 +41,17 @@ const EndScreen = ({ winner, player }: TEndScreenProps) => {
 };
 
 const Game = () => {
-  const { winner, turn, player, playerOneWallsLeft, playerTwoWallsLeft } = useSelector(
-    (state: RootState) => state.playfield
+  const { winner, turn, player, playerOneWallsLeft, playerTwoWallsLeft } = useGameStore(
+    useShallow((state) => ({
+      winner: state.winner,
+      turn: state.turn,
+      player: state.player,
+      playerOneWallsLeft: state.playerOneWallsLeft,
+      playerTwoWallsLeft: state.playerTwoWallsLeft,
+    }))
   );
 
-  const opponent = player === PLAYERS.PLAYER_1 ? PLAYERS.PLAYER_2 : PLAYERS.PLAYER_1;
+  const opponent = getOpponent(player);
   const ownWalls = player === PLAYERS.PLAYER_1 ? playerOneWallsLeft : playerTwoWallsLeft;
   const opponentWalls = player === PLAYERS.PLAYER_1 ? playerTwoWallsLeft : playerOneWallsLeft;
   const isYourTurn = isCurrentPlayerTurn(turn, player);

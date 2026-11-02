@@ -1,8 +1,8 @@
 // LIBRARIES
 import { memo, useCallback, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-// REDUX
-import { move, place, type AppDispatch, type Player, type Position, type RootState } from '@redux';
+import { useShallow } from 'zustand/shallow';
+// STORE
+import { type Player, type Position, useGameStore } from '@store';
 // UTILS
 import {
   availableMovesWithPlayer,
@@ -40,11 +40,21 @@ const getGoalOwner = (position: Position): Player | null => {
 };
 
 export const Playfield = memo(() => {
-  const dispatch = useDispatch<AppDispatch>();
   const [hoveredSlot, setHoveredSlot] = useState<Position | null>(null);
-  const { placed, turn, player, playerOneWallsLeft, playerTwoWallsLeft, playerOnePos, playerTwoPos } = useSelector(
-    (state: RootState) => state.playfield
-  );
+  const { placed, turn, player, playerOneWallsLeft, playerTwoWallsLeft, playerOnePos, playerTwoPos, move, place } =
+    useGameStore(
+      useShallow((state) => ({
+        placed: state.placed,
+        turn: state.turn,
+        player: state.player,
+        playerOneWallsLeft: state.playerOneWallsLeft,
+        playerTwoWallsLeft: state.playerTwoWallsLeft,
+        playerOnePos: state.playerOnePos,
+        playerTwoPos: state.playerTwoPos,
+        move: state.move,
+        place: state.place,
+      }))
+    );
 
   const isFlipped = player === PLAYERS.PLAYER_2;
   const isCurrentTurn = isCurrentPlayerTurn(turn, player);
@@ -73,9 +83,9 @@ export const Playfield = memo(() => {
 
   const handleMove = useCallback(
     (position: Position) => {
-      dispatch(move(position));
+      move(position);
     },
-    [dispatch]
+    [move]
   );
 
   const handleWallHover = useCallback((position: Position) => {
@@ -92,9 +102,9 @@ export const Playfield = memo(() => {
       if (!isValid) return;
 
       setHoveredSlot(null);
-      dispatch(place(coords));
+      place(coords);
     },
-    [dispatch, getWallPlacement]
+    [place, getWallPlacement]
   );
 
   const getOccupant = (position: Position) => {

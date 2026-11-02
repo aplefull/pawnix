@@ -19,7 +19,7 @@
       "@components": ["./src/components/index.ts"],
       "@services": ["./src/services/index.ts"],
       "@pages": ["./src/pages/index.ts"],
-      "@redux": ["./src/redux/index.ts"],
+      "@store": ["./src/store/index.ts"],
       "@constants": ["./src/constants/index.ts"],
       "@utils": ["./src/utils/index.ts"],
       "@hooks": ["./src/hooks/index.ts"],

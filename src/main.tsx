@@ -2,9 +2,6 @@
 import '@styles/index.scss';
 // LIBRARIES
 import { createRoot } from 'react-dom/client';
-import { Provider } from 'react-redux';
-// REDUX
-import { store } from '@redux';
 // COMPONENTS
 import { App } from '@components';
 
@@ -14,11 +11,4 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-const root = createRoot(rootElement);
-
-// TODO investigate why moving provider inside App breaks hmr
-root.render(
-  <Provider store={store}>
-    <App />
-  </Provider>
-);
+createRoot(rootElement).render(<App />);

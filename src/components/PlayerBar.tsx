@@ -1,8 +1,8 @@
 // LIBRARIES
 import cx from 'clsx';
 import { memo } from 'react';
-// REDUX
-import type { Player } from '@redux';
+// STORE
+import type { Player } from '@store';
 // COMPONENTS
 import { Pawn } from '@components';
 // CONSTANTS

@@ -1,16 +1,15 @@
 // LIBRARIES
 import { type ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
-// REDUX
-import { type Player, selectPlayer, setRoomId, createNewRoom, type AppDispatch } from '@redux';
+// STORE
+import { type Player, useGameStore } from '@store';
 // COMPONENTS
 import { Button, Panel, Pawn, RoomCode, Spinner, TextInput } from '@components';
 // CONSTANTS
 import { MENU_STATES, PLAYER_NAMES, PLAYERS } from '@constants';
 // UTILS
-import { isUuid, logger } from '@utils';
+import { getOpponent, isUuid, logger } from '@utils';
 // SERVICES
 import { db } from '@services';
 // STYLES
@@ -82,9 +81,8 @@ const JoinRoom = () => {
     }
 
     const { initialPlayer } = docSnap.data();
-    const player = initialPlayer === PLAYERS.PLAYER_1 ? PLAYERS.PLAYER_2 : PLAYERS.PLAYER_1;
 
-    navigate(`/play/${roomId}/${player}`);
+    navigate(`/play/${roomId}/${getOpponent(initialPlayer)}`);
   };
 
   return (
@@ -110,17 +108,10 @@ const JoinRoom = () => {
 };
 
 const MenuContentSwitch = memo(({ id, menuState, handleStateChange }: TMenuContentSwitchProps) => {
-  const dispatch = useDispatch<AppDispatch>();
+  const createRoom = useGameStore((state) => state.createRoom);
 
   const handlePlayerSelect = (value: Player) => () => {
-    dispatch(selectPlayer(value));
-    dispatch(setRoomId(id));
-    dispatch(
-      createNewRoom({
-        roomId: id,
-        initialPlayer: value,
-      })
-    );
+    createRoom(id, value);
     handleStateChange(MENU_STATES.WAITING);
   };
 

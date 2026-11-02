@@ -1,7 +1,7 @@
 // LIBRARIES
 import cx from 'clsx';
-// REDUX
-import type { Player } from '@redux';
+// STORE
+import type { Player } from '@store';
 // CONSTANTS
 import { PLAYERS } from '@constants';
 // STYLES

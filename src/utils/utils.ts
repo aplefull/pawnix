@@ -1,8 +1,8 @@
 // LIBRARIES
 import path from 'ngraph.path';
 import createGraph from 'ngraph.graph';
-// REDUX
-import type { Player, Position } from '@redux';
+// STORE
+import type { Player, Position } from '@store';
 // CONSTANTS
 import { ELEMENTS, PLAYFIELD_INITIAL_STATE, PLAYFIELD_SIZE, gifs, PLAYERS, type TElements } from '@constants';
 
@@ -181,6 +181,10 @@ export const isLegalWallPlacement = (newCoords: Position[], walls: Position[]) =
 
 export const isCurrentPlayerTurn = (turn: Player, currentPlayer: Player) => {
   return turn === currentPlayer;
+};
+
+export const getOpponent = (player: Player): Player => {
+  return player === PLAYERS.PLAYER_1 ? PLAYERS.PLAYER_2 : PLAYERS.PLAYER_1;
 };
 
 export const doesPlayerHaveWalls = (player: Player, playerOneWalls: number, playerTwoWalls: number) => {

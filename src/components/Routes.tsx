@@ -1,8 +1,8 @@
 // LIBRARIES
 import { createBrowserRouter, Navigate, type Params, RouterProvider } from 'react-router';
-import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
-// REDUX
-import { selectPlayer, setData, setRoomId, store } from '@redux';
+import { doc, getDoc, onSnapshot, type Unsubscribe, updateDoc } from 'firebase/firestore';
+// STORE
+import { type RoomData, useGameStore } from '@store';
 // SERVICES
 import { db } from '@services';
 // PAGES
@@ -13,6 +13,8 @@ import { PageSpinner } from '@components';
 import { PLAYERS } from '@constants';
 // UTILS
 import { isUuid } from '@utils';
+
+let unsubscribeRoom: Unsubscribe | null = null;
 
 const joinGame = async ({ roomId, player }: Params) => {
   if (!roomId || !isUuid(roomId)) {
@@ -34,11 +36,15 @@ const joinGame = async ({ roomId, player }: Params) => {
     isGameStarted: true,
   });
 
-  store.dispatch(selectPlayer(player));
-  store.dispatch(setRoomId(roomId));
+  const { enterRoom, setData } = useGameStore.getState();
 
-  onSnapshot(docRef, (doc) => {
-    store.dispatch(setData(doc.data()));
+  enterRoom(roomId, player);
+
+  unsubscribeRoom?.();
+  unsubscribeRoom = onSnapshot(docRef, (doc) => {
+    if (doc.exists()) {
+      setData(doc.data() as RoomData);
+    }
   });
 };
 
