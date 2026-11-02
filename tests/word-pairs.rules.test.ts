@@ -65,7 +65,7 @@ const submitPairing = (uid: string, seat: string, pairing: unknown, round = 1) =
 
 beforeAll(async () => {
   env = await initializeTestEnvironment({
-    projectId: 'demo-quoridor',
+    projectId: 'demo-pawnix',
     firestore: { rules: readFileSync('firestore.rules', 'utf8'), host: '127.0.0.1', port: 8080 },
   });
 });

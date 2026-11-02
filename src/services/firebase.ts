@@ -35,7 +35,7 @@ const TAB_CHECK_TIMEOUT = 150;
 
 type TIdentityMessage = { type: 'who-has' | 'taken'; uid: string };
 
-const identityChannel = new BroadcastChannel('quoridor-identity');
+const identityChannel = new BroadcastChannel('pawnix-identity');
 let confirmedUid: string | null = null;
 let signInPromise: Promise<User> | null = null;
 

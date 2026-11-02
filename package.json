@@ -1,5 +1,5 @@
 {
-  "name": "quoridor",
+  "name": "pawnix",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -14,14 +14,14 @@
   },
   "scripts": {
     "dev": "vite",
-    "dev:emulators": "firebase emulators:exec --only firestore,auth,database --project demo-quoridor \"vite --mode emulators\"",
+    "dev:emulators": "firebase emulators:exec --only firestore,auth,database --project demo-pawnix \"vite --mode emulators\"",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "biome lint",
     "format": "biome format --write",
     "check": "biome check --write",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tests/tsconfig.json",
-    "test": "firebase emulators:exec --only firestore,database --project demo-quoridor \"vitest run --no-file-parallelism\""
+    "test": "firebase emulators:exec --only firestore,database --project demo-pawnix \"vitest run --no-file-parallelism\""
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",

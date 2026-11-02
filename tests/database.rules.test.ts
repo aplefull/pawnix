@@ -17,7 +17,7 @@ const anonymous = () => env.unauthenticatedContext().database();
 
 beforeAll(async () => {
   env = await initializeTestEnvironment({
-    projectId: 'demo-quoridor',
+    projectId: 'demo-pawnix',
     database: { rules: readFileSync('database.rules.json', 'utf8'), host: '127.0.0.1', port: 9000 },
   });
 });

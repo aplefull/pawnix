@@ -8,7 +8,7 @@ export const FIREBASE_CONFIG = {
   appId: '1:1020112765303:web:d575477aa29fe6d040a172',
 };
 
-export const EMULATOR_PROJECT_ID = 'demo-quoridor';
+export const EMULATOR_PROJECT_ID = 'demo-pawnix';
 
 export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
@@ -18,7 +18,7 @@ export const ROOM_CODE_ATTEMPTS = 5;
 
 export const ROOM_TTL_DAYS = 7;
 
-export const SITE_NAME = 'Board Games';
+export const SITE_NAME = 'Pawnix';
 
 export const NAME_MAX_LENGTH = 20;
 
