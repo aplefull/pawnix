@@ -1,9 +1,9 @@
 // LIBRARIES
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/shallow';
 // STORE
 import { movePawn, placeWall, useQuoridor } from '../store';
-import type { Player, Position } from '../types';
+import type { Player, Position, Wall } from '../types';
 // UTILS
 import {
   availableMovesWithPlayer,
@@ -45,6 +45,7 @@ const getGoalOwner = (position: Position): Player | null => {
 
 export const Playfield = memo(() => {
   const [hoveredSlot, setHoveredSlot] = useState<Position | null>(null);
+  const [pendingWall, setPendingWall] = useState<Wall | null>(null);
   const { walls, players, turn, player, playerOneWallsLeft, playerTwoWallsLeft, playerOnePos, playerTwoPos } =
     useQuoridor(
       useShallow((state) => ({
@@ -70,21 +71,26 @@ export const Playfield = memo(() => {
     return availableMovesWithPlayer(playerOnePos, playerTwoPos, player, placed);
   }, [isCurrentTurn, playerOnePos, playerTwoPos, player, placed]);
 
-  const getWallPlacement = useCallback(
-    (position: Position) => {
-      const wall = getWallFromSlot(position);
+  const isValidWall = useCallback(
+    (wall: Wall) => {
       const cells = getWallCells(wall);
-      const isValid = isLegalWallPlacement(cells, placed) && !isBlockingPath(playerOnePos, playerTwoPos, cells, placed);
-
-      return { wall, isValid };
+      return isLegalWallPlacement(cells, placed) && !isBlockingPath(playerOnePos, playerTwoPos, cells, placed);
     },
     [placed, playerOnePos, playerTwoPos]
   );
 
   const wallPreview = useMemo(() => {
-    if (!canPlace || !hoveredSlot) return null;
-    return getWallPlacement(hoveredSlot);
-  }, [canPlace, hoveredSlot, getWallPlacement]);
+    if (!canPlace) return null;
+
+    const wall = hoveredSlot ? getWallFromSlot(hoveredSlot) : pendingWall;
+    if (!wall) return null;
+
+    return { wall, isValid: isValidWall(wall) };
+  }, [canPlace, hoveredSlot, pendingWall, isValidWall]);
+
+  useEffect(() => {
+    if (!canPlace) setPendingWall(null);
+  }, [canPlace]);
 
   const handleMove = useCallback((position: Position) => {
     movePawn(position);
@@ -98,15 +104,32 @@ export const Playfield = memo(() => {
     setHoveredSlot(null);
   }, []);
 
-  const handleWallSelect = useCallback(
-    (position: Position) => {
-      const { wall, isValid } = getWallPlacement(position);
-      if (!isValid) return;
+  const confirmWall = useCallback(
+    (wall: Wall) => {
+      if (!isValidWall(wall)) return;
 
       setHoveredSlot(null);
+      setPendingWall(null);
       placeWall(wall);
     },
-    [getWallPlacement]
+    [isValidWall]
+  );
+
+  const handleWallSelect = useCallback(
+    (position: Position, isTouch: boolean) => {
+      if (!isTouch) {
+        confirmWall(getWallFromSlot(position));
+        return;
+      }
+
+      if (pendingWall && containsPosition(getWallCells(pendingWall), position)) {
+        confirmWall(pendingWall);
+        return;
+      }
+
+      setPendingWall(getWallFromSlot(position));
+    },
+    [confirmWall, pendingWall]
   );
 
   const getOccupant = (position: Position) => {

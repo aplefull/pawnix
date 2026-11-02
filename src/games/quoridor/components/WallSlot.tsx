@@ -1,6 +1,6 @@
 // LIBRARIES
 import cx from 'clsx';
-import { memo } from 'react';
+import { memo, type PointerEvent, useRef } from 'react';
 // STORE
 import type { Position } from '../types';
 // UTILS
@@ -15,18 +15,27 @@ type TWallSlotProps = {
   isFlipped: boolean;
   onHover: (position: Position) => void;
   onLeave: () => void;
-  onSelect: (position: Position) => void;
+  onSelect: (position: Position, isTouch: boolean) => void;
 };
 
 export const WallSlot = memo(({ position, isFlipped, onHover, onLeave, onSelect }: TWallSlotProps) => {
+  const isTouchRef = useRef(false);
   const isHorizontal = getElementType(position) === ELEMENTS.HORIZONTAL_WALL;
 
-  const handlePointerEnter = () => {
-    onHover(position);
+  const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    isTouchRef.current = event.pointerType === 'touch';
+  };
+
+  const handlePointerEnter = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType !== 'touch') onHover(position);
+  };
+
+  const handlePointerLeave = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType !== 'touch') onLeave();
   };
 
   const handleClick = () => {
-    onSelect(position);
+    onSelect(position, isTouchRef.current);
   };
 
   return (
@@ -36,8 +45,9 @@ export const WallSlot = memo(({ position, isFlipped, onHover, onLeave, onSelect 
       aria-label="Place wall"
       className={cx(styles.slot, isHorizontal ? styles.horizontal : styles.vertical)}
       style={getGridPlacement(position, isFlipped)}
+      onPointerDown={handlePointerDown}
       onPointerEnter={handlePointerEnter}
-      onPointerLeave={onLeave}
+      onPointerLeave={handlePointerLeave}
       onClick={handleClick}
     />
   );
