@@ -9,7 +9,8 @@ import {
   containsPosition,
   doesPlayerHaveWalls,
   getElementType,
-  getWallCoords,
+  getWallCells,
+  getWallFromSlot,
   isBlockingPath,
   isCurrentPlayerTurn,
   isLegalWallPlacement,
@@ -41,23 +42,36 @@ const getGoalOwner = (position: Position): Player | null => {
 
 export const Playfield = memo(() => {
   const [hoveredSlot, setHoveredSlot] = useState<Position | null>(null);
-  const { placed, turn, player, playerOneWallsLeft, playerTwoWallsLeft, playerOnePos, playerTwoPos, move, place } =
-    useGameStore(
-      useShallow((state) => ({
-        placed: state.placed,
-        turn: state.turn,
-        player: state.player,
-        playerOneWallsLeft: state.playerOneWallsLeft,
-        playerTwoWallsLeft: state.playerTwoWallsLeft,
-        playerOnePos: state.playerOnePos,
-        playerTwoPos: state.playerTwoPos,
-        move: state.move,
-        place: state.place,
-      }))
-    );
+  const {
+    walls,
+    players,
+    turn,
+    player,
+    playerOneWallsLeft,
+    playerTwoWallsLeft,
+    playerOnePos,
+    playerTwoPos,
+    move,
+    place,
+  } = useGameStore(
+    useShallow((state) => ({
+      walls: state.walls,
+      players: state.players,
+      turn: state.turn,
+      player: state.player,
+      playerOneWallsLeft: state.playerOneWallsLeft,
+      playerTwoWallsLeft: state.playerTwoWallsLeft,
+      playerOnePos: state.playerOnePos,
+      playerTwoPos: state.playerTwoPos,
+      move: state.move,
+      place: state.place,
+    }))
+  );
+
+  const placed = useMemo(() => walls.flatMap(getWallCells), [walls]);
 
   const isFlipped = player === PLAYERS.PLAYER_2;
-  const isCurrentTurn = isCurrentPlayerTurn(turn, player);
+  const isCurrentTurn = !!players.One && !!players.Two && isCurrentPlayerTurn(turn, player);
   const canPlace = isCurrentTurn && doesPlayerHaveWalls(player, playerOneWallsLeft, playerTwoWallsLeft);
 
   const availableMoves = useMemo(() => {
@@ -67,11 +81,11 @@ export const Playfield = memo(() => {
 
   const getWallPlacement = useCallback(
     (position: Position) => {
-      const coords = getWallCoords(position, getElementType(position));
-      const isValid =
-        isLegalWallPlacement(coords, placed) && !isBlockingPath(playerOnePos, playerTwoPos, coords, placed);
+      const wall = getWallFromSlot(position);
+      const cells = getWallCells(wall);
+      const isValid = isLegalWallPlacement(cells, placed) && !isBlockingPath(playerOnePos, playerTwoPos, cells, placed);
 
-      return { coords, isValid };
+      return { wall, isValid };
     },
     [placed, playerOnePos, playerTwoPos]
   );
@@ -98,11 +112,11 @@ export const Playfield = memo(() => {
 
   const handleWallSelect = useCallback(
     (position: Position) => {
-      const { coords, isValid } = getWallPlacement(position);
+      const { wall, isValid } = getWallPlacement(position);
       if (!isValid) return;
 
       setHoveredSlot(null);
-      place(coords);
+      place(wall);
     },
     [place, getWallPlacement]
   );
@@ -128,11 +142,11 @@ export const Playfield = memo(() => {
         />
       ))}
 
-      <WallLayer positions={placed} isFlipped={isFlipped} variant="placed" />
+      <WallLayer walls={walls} isFlipped={isFlipped} variant="placed" />
 
       {wallPreview && (
         <WallLayer
-          positions={wallPreview.coords}
+          walls={[wallPreview.wall]}
           isFlipped={isFlipped}
           variant={wallPreview.isValid ? 'preview' : 'invalid'}
         />

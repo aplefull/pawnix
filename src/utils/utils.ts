@@ -2,7 +2,7 @@
 import path from 'ngraph.path';
 import createGraph from 'ngraph.graph';
 // STORE
-import type { Player, Position } from '@store';
+import type { Player, Position, Wall } from '@store';
 // CONSTANTS
 import { ELEMENTS, PLAYFIELD_INITIAL_STATE, PLAYFIELD_SIZE, gifs, PLAYERS, type TElements } from '@constants';
 
@@ -219,6 +219,29 @@ export const getWallCoords = (desirablePos: Position, wallType: string): Positio
         ];
   }
   return [];
+};
+
+export const getWallFromSlot = (slot: Position): Wall => {
+  const type = getElementType(slot);
+  const [, center] = getWallCoords(slot, type);
+
+  return { ...center, orientation: type === ELEMENTS.HORIZONTAL_WALL ? 'horizontal' : 'vertical' };
+};
+
+export const getWallCells = ({ row, col, orientation }: Wall): Position[] => {
+  if (orientation === 'horizontal') {
+    return [
+      { row, col: col - 1 },
+      { row, col },
+      { row, col: col + 1 },
+    ];
+  }
+
+  return [
+    { row: row - 1, col },
+    { row, col },
+    { row: row + 1, col },
+  ];
 };
 
 export const isBlockingPath = (

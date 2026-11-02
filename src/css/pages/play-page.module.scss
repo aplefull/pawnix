@@ -47,3 +47,9 @@
 .result-text {
   color: var(--color-text-muted);
 }
+
+.waiting {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}

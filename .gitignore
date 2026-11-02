@@ -22,3 +22,8 @@ yarn-debug.log*
 yarn-error.log*
 
 .idea
+
+# firebase
+firebase-debug.log
+firestore-debug.log
+.firebase

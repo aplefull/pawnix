@@ -10,47 +10,22 @@
 }
 
 .placed {
-  --segment-color: var(--color-accent);
+  --wall-color: var(--color-accent);
 }
 
 .preview {
-  --segment-color: var(--color-accent);
+  --wall-color: var(--color-accent);
 
   opacity: 0.45;
 }
 
 .invalid {
-  --segment-color: var(--color-danger);
+  --wall-color: var(--color-danger);
 
   opacity: 0.7;
 }
 
-.segment {
-  --cap: calc(var(--groove) / 2);
-
-  background-color: var(--segment-color);
-}
-
-.horizontal {
-  &.round-start {
-    border-top-left-radius: var(--cap);
-    border-bottom-left-radius: var(--cap);
-  }
-
-  &.round-end {
-    border-top-right-radius: var(--cap);
-    border-bottom-right-radius: var(--cap);
-  }
-}
-
-.vertical {
-  &.round-start {
-    border-top-left-radius: var(--cap);
-    border-top-right-radius: var(--cap);
-  }
-
-  &.round-end {
-    border-bottom-left-radius: var(--cap);
-    border-bottom-right-radius: var(--cap);
-  }
+.wall {
+  background-color: var(--wall-color);
+  border-radius: calc(var(--groove) / 2);
 }

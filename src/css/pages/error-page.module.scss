@@ -19,11 +19,6 @@
 }
 
 .message {
-  padding: var(--space-3);
-  background-color: var(--color-bg);
-  border-radius: var(--radius-md);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  color: var(--color-danger);
+  color: var(--color-text-muted);
   overflow-wrap: anywhere;
 }

@@ -7,7 +7,7 @@ import { type Player, useGameStore } from '@store';
 // UTILS
 import { getOpponent, isCurrentPlayerTurn, logger } from '@utils';
 // COMPONENTS
-import { Button, Gif, Panel, PlayerBar, Playfield, Spinner } from '@components';
+import { Button, Gif, Panel, PlayerBar, Playfield, RoomCode, Spinner } from '@components';
 // CONSTANTS
 import { PLAYERS } from '@constants';
 // STYLES
@@ -40,16 +40,35 @@ const EndScreen = ({ winner, player }: TEndScreenProps) => {
   );
 };
 
+const WaitingScreen = ({ roomId }: { roomId: string }) => {
+  return (
+    <div className={styles.overlay}>
+      <Panel className={styles.endScreen}>
+        <div className={styles.waiting}>
+          <Spinner size="sm" />
+          <span>Waiting for your opponent to join...</span>
+        </div>
+        <p className={styles.resultText}>Send them this room code:</p>
+        <RoomCode code={roomId} />
+      </Panel>
+    </div>
+  );
+};
+
 const Game = () => {
-  const { winner, turn, player, playerOneWallsLeft, playerTwoWallsLeft } = useGameStore(
+  const { winner, turn, player, players, roomId, playerOneWallsLeft, playerTwoWallsLeft } = useGameStore(
     useShallow((state) => ({
       winner: state.winner,
       turn: state.turn,
       player: state.player,
+      players: state.players,
+      roomId: state.roomId,
       playerOneWallsLeft: state.playerOneWallsLeft,
       playerTwoWallsLeft: state.playerTwoWallsLeft,
     }))
   );
+
+  const isWaiting = !players.One || !players.Two;
 
   const opponent = getOpponent(player);
   const ownWalls = player === PLAYERS.PLAYER_1 ? playerOneWallsLeft : playerTwoWallsLeft;
@@ -58,12 +77,18 @@ const Game = () => {
 
   return (
     <>
-      <PlayerBar player={opponent} isYou={false} isActive={!winner && !isYourTurn} wallsLeft={opponentWalls} />
+      <PlayerBar
+        player={opponent}
+        isYou={false}
+        isActive={!isWaiting && !winner && !isYourTurn}
+        wallsLeft={opponentWalls}
+      />
       <div className={styles.board}>
         <Playfield />
+        {isWaiting && roomId && <WaitingScreen roomId={roomId} />}
         {winner && <EndScreen winner={winner} player={player} />}
       </div>
-      <PlayerBar player={player} isYou isActive={!winner && isYourTurn} wallsLeft={ownWalls} />
+      <PlayerBar player={player} isYou isActive={!isWaiting && !winner && isYourTurn} wallsLeft={ownWalls} />
     </>
   );
 };

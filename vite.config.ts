@@ -17,6 +17,7 @@ export default defineConfig({
       output: {
         codeSplitting: {
           groups: [
+            { name: 'firebase-auth', test: /node_modules[\\/]@firebase[\\/]auth[\\/]/ },
             { name: 'firebase', test: /node_modules[\\/](@firebase|firebase|re2js|@grpc|protobufjs)[\\/]/ },
             { name: 'react', test: /node_modules[\\/](react|react-dom|react-router|scheduler|cookie)[\\/]/ },
             { name: 'vendor', test: /node_modules[\\/]/ },

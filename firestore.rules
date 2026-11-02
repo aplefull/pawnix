@@ -1,0 +1,132 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rooms/{roomId} {
+      function uid() {
+        return request.auth.uid;
+      }
+
+      function isSeated(data) {
+        return data.players.One == uid() || data.players.Two == uid();
+      }
+
+      function seatOf(data) {
+        return data.players.One == uid() ? 'One' : 'Two';
+      }
+
+      function opponentOf(seat) {
+        return seat == 'One' ? 'Two' : 'One';
+      }
+
+      function posKey(seat) {
+        return seat == 'One' ? 'playerOnePos' : 'playerTwoPos';
+      }
+
+      function wallsLeftKey(seat) {
+        return seat == 'One' ? 'playerOneWallsLeft' : 'playerTwoWallsLeft';
+      }
+
+      function changedKeys() {
+        return request.resource.data.diff(resource.data).affectedKeys();
+      }
+
+      function isTile(pos) {
+        return pos is map
+          && pos.keys().hasOnly(['row', 'col'])
+          && pos.row is int && pos.col is int
+          && pos.row >= 0 && pos.row <= 16 && pos.col >= 0 && pos.col <= 16
+          && pos.row % 2 == 0 && pos.col % 2 == 0;
+      }
+
+      function isWall(wall) {
+        return wall is map
+          && wall.keys().hasOnly(['row', 'col', 'orientation'])
+          && wall.row is int && wall.col is int
+          && wall.row >= 1 && wall.row <= 15 && wall.col >= 1 && wall.col <= 15
+          && wall.row % 2 == 1 && wall.col % 2 == 1
+          && wall.orientation in ['horizontal', 'vertical'];
+      }
+
+      function isInitialGame(data) {
+        return data.playerOnePos == { 'row': 16, 'col': 8 }
+          && data.playerTwoPos == { 'row': 0, 'col': 8 }
+          && data.playerOneWallsLeft == 10
+          && data.playerTwoWallsLeft == 10
+          && data.walls == []
+          && data.turn == 'One'
+          && data.winner == null;
+      }
+
+      function isValidNewRoom() {
+        let data = request.resource.data;
+        let players = data.players;
+
+        return data.keys().hasOnly(['players', 'playerOnePos', 'playerTwoPos', 'playerOneWallsLeft', 'playerTwoWallsLeft', 'walls', 'turn', 'winner', 'createdAt'])
+          && players.keys().hasOnly(['One', 'Two'])
+          && players.keys().hasAll(['One', 'Two'])
+          && ((players.One == uid() && players.Two == null) || (players.Two == uid() && players.One == null))
+          && isInitialGame(data)
+          && data.createdAt == request.time;
+      }
+
+      function isClaimingSeat() {
+        let before = resource.data.players;
+        let after = request.resource.data.players;
+
+        return changedKeys().hasOnly(['players'])
+          && !isSeated(resource.data)
+          && after.keys().hasOnly(['One', 'Two'])
+          && ((before.One == null && after.One == uid() && after.Two == before.Two)
+            || (before.Two == null && after.Two == uid() && after.One == before.One));
+      }
+
+      function isMove(seat) {
+        let current = resource.data[posKey(seat)];
+        let next = request.resource.data[posKey(seat)];
+        let goalRow = seat == 'One' ? 0 : 16;
+
+        return changedKeys().hasOnly([posKey(seat), 'turn', 'winner'])
+          && isTile(next)
+          && (math.abs(next.row - current.row) + math.abs(next.col - current.col)) in [2, 4]
+          && next != request.resource.data[posKey(opponentOf(seat))]
+          && request.resource.data.winner == (next.row == goalRow ? seat : null);
+      }
+
+      function isPlace(seat) {
+        let before = resource.data;
+        let after = request.resource.data;
+        let count = before.walls.size();
+
+        return changedKeys().hasOnly(['walls', wallsLeftKey(seat), 'turn'])
+          && after[wallsLeftKey(seat)] == before[wallsLeftKey(seat)] - 1
+          && after[wallsLeftKey(seat)] >= 0
+          && after.walls.size() == count + 1
+          && (count == 0 || after.walls[0:count] == before.walls)
+          && isWall(after.walls[count]);
+      }
+
+      function isTakingTurn() {
+        let seat = seatOf(resource.data);
+
+        return isSeated(resource.data)
+          && resource.data.players.One != null
+          && resource.data.players.Two != null
+          && resource.data.winner == null
+          && resource.data.turn == seat
+          && request.resource.data.turn == opponentOf(seat)
+          && (isMove(seat) || isPlace(seat));
+      }
+
+      function isRestarting() {
+        return isSeated(resource.data)
+          && resource.data.winner != null
+          && changedKeys().hasOnly(['playerOnePos', 'playerTwoPos', 'playerOneWallsLeft', 'playerTwoWallsLeft', 'walls', 'turn', 'winner'])
+          && isInitialGame(request.resource.data);
+      }
+
+      allow get: if request.auth != null;
+      allow create: if request.auth != null && isValidNewRoom();
+      allow update: if request.auth != null && (isClaimingSeat() || isTakingTurn() || isRestarting());
+    }
+  }
+}
