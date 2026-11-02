@@ -1,14 +1,18 @@
 // LIBRARIES
 import { ReactNode } from 'react';
-import { MantineProvider } from '@mantine/core';
+import { createTheme, MantineProvider } from '@mantine/core';
 
 type TProvidersProps = {
   children: ReactNode;
 };
 
+const theme = createTheme({
+  defaultRadius: 'sm',
+});
+
 export const Providers = ({ children }: TProvidersProps) => {
   return (
-    <MantineProvider withGlobalStyles withCSSVariables theme={{ colorScheme: 'dark' }}>
+    <MantineProvider defaultColorScheme="dark" theme={theme}>
       {children}
     </MantineProvider>
   );

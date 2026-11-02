@@ -1,3 +1,5 @@
+// STYLES
+import '@mantine/core/styles.css';
 // LIBRARIES
 import { getFirestore } from 'firebase/firestore';
 import { createRoot } from 'react-dom/client';

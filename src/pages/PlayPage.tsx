@@ -3,7 +3,7 @@ import { Button, Loader, Paper } from '@mantine/core';
 import { ToastContainer } from 'react-toastify';
 import React, { Suspense, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Await, useLoaderData, useNavigate, useParams } from 'react-router-dom';
+import { Await, useLoaderData, useNavigate, useParams } from 'react-router';
 // REDUX
 import { Player, restartGame, AppDispatch, RootState } from '@redux';
 // UTILS
@@ -14,7 +14,6 @@ import { Gif, Playfield } from '@components';
 import { PLAYERS } from '@constants';
 // STYLES
 import styles from '@styles/pages/play-page.module.scss';
-import 'react-toastify/dist/ReactToastify.css';
 
 type TEndScreenProps = {
   winner: Player;

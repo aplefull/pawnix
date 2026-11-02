@@ -1,7 +1,7 @@
 // LIBRARIES
 import { validate } from 'uuid';
 import { useDispatch } from 'react-redux';
-import { createBrowserRouter, defer, Navigate, Params, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Params, RouterProvider } from 'react-router';
 import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 // REDUX
 import { selectPlayer, setData, setRoomId, AppDispatch } from '@redux';
@@ -51,7 +51,7 @@ export const Routes = () => {
       resolve(1);
     });
 
-    return defer({ promise });
+    return { promise };
   };
 
   const router = createBrowserRouter([

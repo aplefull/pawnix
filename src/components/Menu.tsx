@@ -2,7 +2,7 @@
 import { ChangeEvent, memo, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { v4, validate } from 'uuid';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { Button, Loader, Paper, TextInput } from '@mantine/core';
 // REDUX

@@ -1,5 +1,5 @@
 // LIBRARIES
-import { useRouteError } from 'react-router-dom';
+import { useRouteError } from 'react-router';
 // STYLES
 import styles from '@styles/pages/error-page.module.scss';
 
