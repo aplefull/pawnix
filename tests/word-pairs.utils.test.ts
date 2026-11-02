@@ -5,8 +5,8 @@ import {
   dealWords,
   getNextRoundState,
   getRematchState,
-  WORDS,
-} from '../src/games/word-pairs';
+} from '../src/games/word-pairs/utils';
+import { WORDS } from '../src/games/word-pairs/words';
 
 describe('word pairs logic', () => {
   it('deals five different words from the chosen list', () => {

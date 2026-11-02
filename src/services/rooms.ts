@@ -9,6 +9,7 @@ import {
   Timestamp,
   type Unsubscribe,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore';
 // STORE
 import type { RoomDoc } from '@store';
@@ -40,6 +41,8 @@ export class NameRequiredError extends Error {
 }
 
 const getRoomRef = (roomId: string) => doc(db, 'rooms', roomId);
+
+const getSecretRef = (roomId: string, seat: string) => doc(db, 'rooms', roomId, 'private', seat);
 
 export const createRoom = async <TState>({ game, seats, seat, name, state }: TCreateRoomOptions<TState>) => {
   const user = await ensureSignedIn();
@@ -106,22 +109,60 @@ export const claimSeat = (roomId: string, uid: string, name: string) => {
 
 export const subscribeRoom = (
   roomId: string,
-  onChange: (room: RoomDoc | null) => void,
+  onChange: (room: RoomDoc | null, synced: boolean) => void,
   onError: (error: FirestoreError) => void
 ): Unsubscribe => {
   return onSnapshot(
     getRoomRef(roomId),
+    { includeMetadataChanges: true },
     (docSnap) => {
-      onChange(docSnap.exists() ? (docSnap.data() as RoomDoc) : null);
+      onChange(docSnap.exists() ? (docSnap.data() as RoomDoc) : null, !docSnap.metadata.hasPendingWrites);
     },
     onError
   );
 };
 
-export const updateRoomState = <TState extends object>(roomId: string, patch: Partial<TState>) => {
-  const update = Object.fromEntries(Object.entries(patch).map(([key, value]) => [`state.${key}`, value]));
+const toStateUpdate = (patch: object) => {
+  return Object.fromEntries(Object.entries(patch).map(([key, value]) => [`state.${key}`, value]));
+};
 
-  return updateDoc(getRoomRef(roomId), update);
+export const updateRoomState = <TState extends object>(roomId: string, patch: Partial<TState>) => {
+  return updateDoc(getRoomRef(roomId), toStateUpdate(patch));
+};
+
+export const fetchSecret = async <TSecret>(roomId: string, seat: string) => {
+  const docSnap = await getDoc(getSecretRef(roomId, seat));
+
+  return docSnap.exists() ? (docSnap.data() as TSecret) : null;
+};
+
+export const subscribeSecret = <TSecret>(
+  roomId: string,
+  seat: string,
+  onChange: (secret: TSecret | null) => void,
+  onError: (error: FirestoreError) => void
+): Unsubscribe => {
+  return onSnapshot(
+    getSecretRef(roomId, seat),
+    (docSnap) => {
+      onChange(docSnap.exists() ? (docSnap.data() as TSecret) : null);
+    },
+    onError
+  );
+};
+
+export const updateRoomStateWithSecret = <TState extends object, TSecret extends object>(
+  roomId: string,
+  seat: string,
+  secret: TSecret,
+  patch: Partial<TState>
+) => {
+  const batch = writeBatch(db);
+
+  batch.set(getSecretRef(roomId, seat), secret);
+  batch.update(getRoomRef(roomId), toStateUpdate(patch));
+
+  return batch.commit();
 };
 
 export const resetRoomState = <TState extends object>(roomId: string, state: TState) => {

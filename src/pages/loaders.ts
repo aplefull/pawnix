@@ -42,9 +42,9 @@ const joinGame = async (roomId: string): Promise<JoinResult> => {
   const room = await new Promise<RoomDoc | null>((resolve, reject) => {
     unsubscribeRoom = subscribeRoom(
       roomId,
-      (data) => {
+      (data, synced) => {
         if (data) {
-          setRoom(data);
+          setRoom(data, synced);
         }
         resolve(data);
       },
