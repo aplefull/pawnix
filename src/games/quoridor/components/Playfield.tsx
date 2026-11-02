@@ -2,7 +2,8 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/shallow';
 // STORE
-import { type Player, type Position, useGameStore } from '@store';
+import { useGameStore } from '../gameStore';
+import type { Player, Position } from '../types';
 // UTILS
 import {
   availableMovesWithPlayer,
@@ -15,13 +16,15 @@ import {
   isCurrentPlayerTurn,
   isLegalWallPlacement,
   isSamePosition,
-} from '@utils';
+} from '../utils';
 // COMPONENTS
-import { Cell, WallLayer, WallSlot } from '@components';
+import { Cell } from './Cell';
+import { WallLayer } from './WallLayer';
+import { WallSlot } from './WallSlot';
 // CONSTANTS
-import { ELEMENTS, PLAYERS, PLAYFIELD_INITIAL_STATE, PLAYFIELD_SIZE } from '@constants';
+import { ELEMENTS, PLAYERS, PLAYFIELD_INITIAL_STATE, PLAYFIELD_SIZE } from '../constants';
 // STYLES
-import styles from '@styles/components/playfield.module.scss';
+import styles from '@styles/games/quoridor/playfield.module.scss';
 
 const ALL_POSITIONS: Position[] = PLAYFIELD_INITIAL_STATE.flatMap((row, rowIndex) =>
   row.map((_, col) => ({ row: rowIndex, col }))

@@ -1,5 +1,5 @@
 // CONSTANTS
-import type { PLAYERS } from '@constants';
+import type { PLAYERS } from './constants';
 
 export type Position = {
   row: number;

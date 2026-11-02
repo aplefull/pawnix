@@ -1,11 +1,11 @@
 // LIBRARIES
 import cx from 'clsx';
 // STORE
-import type { Player } from '@store';
+import type { Player } from '../types';
 // CONSTANTS
-import { PLAYERS } from '@constants';
+import { PLAYERS } from '../constants';
 // STYLES
-import styles from '@styles/components/ui/pawn.module.scss';
+import styles from '@styles/games/quoridor/pawn.module.scss';
 
 type TPawnProps = {
   player: Player;

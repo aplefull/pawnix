@@ -2,12 +2,12 @@
 import { type ChangeEvent, memo, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { doc, getDoc } from 'firebase/firestore';
-// STORE
-import { type Player, type RoomData, useGameStore } from '@store';
+// GAMES
+import { type Player, PLAYER_NAMES, PLAYERS, Pawn, type RoomData, useGameStore } from '@games/quoridor';
 // COMPONENTS
-import { Button, Panel, Pawn, Spinner, TextInput } from '@components';
+import { Button, Panel, Spinner, TextInput } from '@components';
 // CONSTANTS
-import { MENU_STATES, PLAYER_NAMES, PLAYERS } from '@constants';
+import { MENU_STATES } from '@constants';
 // UTILS
 import { isUuid, logger } from '@utils';
 // SERVICES

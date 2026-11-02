@@ -2,13 +2,13 @@
 import cx from 'clsx';
 import { memo } from 'react';
 // STORE
-import type { Player } from '@store';
+import type { Player } from '../types';
 // COMPONENTS
-import { Pawn } from '@components';
+import { Pawn } from './Pawn';
 // CONSTANTS
-import { WALLS_PER_PLAYER } from '@constants';
+import { WALLS_PER_PLAYER } from '../constants';
 // STYLES
-import styles from '@styles/components/player-bar.module.scss';
+import styles from '@styles/games/quoridor/player-bar.module.scss';
 
 const PIPS = Array.from({ length: WALLS_PER_PLAYER }, (_, i) => i);
 

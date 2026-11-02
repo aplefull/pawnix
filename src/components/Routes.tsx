@@ -1,16 +1,14 @@
 // LIBRARIES
 import { createBrowserRouter, Navigate, type Params, RouterProvider } from 'react-router';
 import { doc, onSnapshot, runTransaction, type Unsubscribe } from 'firebase/firestore';
-// STORE
-import { type Player, type RoomData, useGameStore } from '@store';
+// GAMES
+import { type Player, PLAYERS, type RoomData, useGameStore } from '@games/quoridor';
 // SERVICES
 import { db, ensureSignedIn } from '@services';
 // PAGES
 import { IndexPage, ErrorPage, PlayPage } from '@pages';
 // COMPONENTS
 import { PageSpinner } from '@components';
-// CONSTANTS
-import { PLAYERS } from '@constants';
 // UTILS
 import { isUuid } from '@utils';
 

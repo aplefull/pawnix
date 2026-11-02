@@ -2,11 +2,12 @@
 import { create } from 'zustand';
 import { doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 // CONSTANTS
-import { PLAYERS, PLAYFIELD_SIZE, WALLS_PER_PLAYER } from '@constants';
+import { PLAYERS, PLAYFIELD_SIZE, WALLS_PER_PLAYER } from './constants';
 // SERVICES
 import { db, ensureSignedIn } from '@services';
 // UTILS
-import { getOpponent, logger } from '@utils';
+import { logger } from '@utils';
+import { getOpponent } from './utils';
 // TYPES
 import type { GameState, Player, Players, Position, RoomData, Wall } from './types';
 

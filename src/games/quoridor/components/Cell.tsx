@@ -2,15 +2,15 @@
 import cx from 'clsx';
 import { memo } from 'react';
 // STORE
-import type { Player, Position } from '@store';
+import type { Player, Position } from '../types';
 // UTILS
-import { getGridPlacement } from '@utils';
+import { getGridPlacement } from '../utils';
 // COMPONENTS
-import { Pawn } from '@components';
+import { Pawn } from './Pawn';
 // CONSTANTS
-import { PLAYERS } from '@constants';
+import { PLAYERS } from '../constants';
 // STYLES
-import styles from '@styles/components/cell.module.scss';
+import styles from '@styles/games/quoridor/cell.module.scss';
 
 type TCellProps = {
   position: Position;

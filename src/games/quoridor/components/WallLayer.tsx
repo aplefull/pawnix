@@ -2,11 +2,11 @@
 import cx from 'clsx';
 import { memo } from 'react';
 // STORE
-import type { Wall } from '@store';
+import type { Wall } from '../types';
 // UTILS
-import { toDisplayPosition } from '@utils';
+import { toDisplayPosition } from '../utils';
 // STYLES
-import styles from '@styles/components/wall-layer.module.scss';
+import styles from '@styles/games/quoridor/wall-layer.module.scss';
 
 type TWallLayerProps = {
   walls: Wall[];

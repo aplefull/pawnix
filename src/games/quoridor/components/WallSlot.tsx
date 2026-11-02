@@ -2,13 +2,13 @@
 import cx from 'clsx';
 import { memo } from 'react';
 // STORE
-import type { Position } from '@store';
+import type { Position } from '../types';
 // UTILS
-import { getElementType, getGridPlacement } from '@utils';
+import { getElementType, getGridPlacement } from '../utils';
 // CONSTANTS
-import { ELEMENTS } from '@constants';
+import { ELEMENTS } from '../constants';
 // STYLES
-import styles from '@styles/components/wall-slot.module.scss';
+import styles from '@styles/games/quoridor/wall-slot.module.scss';
 
 type TWallSlotProps = {
   position: Position;

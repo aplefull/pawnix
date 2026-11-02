@@ -2,14 +2,20 @@
 import { Suspense } from 'react';
 import { Await, useLoaderData } from 'react-router';
 import { useShallow } from 'zustand/shallow';
-// STORE
-import { type Player, useGameStore } from '@store';
+// GAMES
+import {
+  getOpponent,
+  isCurrentPlayerTurn,
+  type Player,
+  PlayerBar,
+  PLAYERS,
+  Playfield,
+  useGameStore,
+} from '@games/quoridor';
 // UTILS
-import { getOpponent, isCurrentPlayerTurn, logger } from '@utils';
+import { logger } from '@utils';
 // COMPONENTS
-import { Button, Gif, Panel, PlayerBar, Playfield, RoomCode, Spinner } from '@components';
-// CONSTANTS
-import { PLAYERS } from '@constants';
+import { Button, Gif, Panel, RoomCode, Spinner } from '@components';
 // STYLES
 import styles from '@styles/pages/play-page.module.scss';
 
