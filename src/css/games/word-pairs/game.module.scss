@@ -46,6 +46,16 @@
   &.active {
     border-color: var(--color-accent);
   }
+
+  &.offline {
+    border-style: dashed;
+  }
+}
+
+.offline-label {
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
 }
 
 .player-name {

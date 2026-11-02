@@ -33,6 +33,17 @@
   font-size: var(--font-size-sm);
 }
 
+.offline {
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background-color: color-mix(in srgb, var(--color-danger) 15%, transparent);
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
 .turn {
   padding: 2px var(--space-2);
   border-radius: var(--radius-full);

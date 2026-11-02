@@ -1,6 +1,10 @@
 // LIBRARIES
 import { Suspense } from 'react';
 import { Await, useLoaderData, useRevalidator } from 'react-router';
+// STORE
+import { useRoomStore } from '@store';
+// HOOKS
+import { usePresenceSync } from '@hooks';
 // COMPONENTS
 import { NamePrompt, PageSpinner } from '@components';
 // TYPES
@@ -14,6 +18,10 @@ type TJoinedGameProps = {
 
 const JoinedGame = ({ result }: TJoinedGameProps) => {
   const { revalidate } = useRevalidator();
+  const roomId = useRoomStore((state) => state.roomId);
+  const uid = useRoomStore((state) => (state.seat && state.room ? state.room.players[state.seat] : null));
+
+  usePresenceSync(result.gameModule ? roomId : null, uid);
 
   if (result.needsName) {
     return (

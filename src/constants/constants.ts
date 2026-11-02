@@ -22,6 +22,8 @@ export const SITE_NAME = 'Board Games';
 
 export const NAME_MAX_LENGTH = 20;
 
+export const OFFLINE_GRACE_MS = 5000;
+
 export const NAME_STORAGE_KEY = 'player-name';
 
 export const MENU_STATES = {

@@ -207,6 +207,7 @@ export const Game = () => {
       <Scoreboard
         round={round}
         totalRounds={totalRounds}
+        players={players}
         names={names}
         scores={scores}
         seat={seat}

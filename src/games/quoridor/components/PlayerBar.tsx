@@ -1,8 +1,10 @@
 // LIBRARIES
 import cx from 'clsx';
 import { memo } from 'react';
-// STORE
+// TYPES
 import type { Player } from '../types';
+// HOOKS
+import { useIsOnline } from '@hooks';
 // COMPONENTS
 import { Pawn } from './Pawn';
 // CONSTANTS
@@ -14,13 +16,16 @@ const PIPS = Array.from({ length: WALLS_PER_PLAYER }, (_, i) => i);
 
 type TPlayerBarProps = {
   player: Player;
+  uid: string | null;
   name: string | null;
   isYou: boolean;
   isActive: boolean;
   wallsLeft: number;
 };
 
-export const PlayerBar = memo(({ player, name, isYou, isActive, wallsLeft }: TPlayerBarProps) => {
+export const PlayerBar = memo(({ player, uid, name, isYou, isActive, wallsLeft }: TPlayerBarProps) => {
+  const isOnline = useIsOnline(uid);
+
   const turnText = isYou ? 'Your turn' : 'Their turn';
   const fallbackName = isYou ? 'You' : 'Opponent';
 
@@ -30,6 +35,7 @@ export const PlayerBar = memo(({ player, name, isYou, isActive, wallsLeft }: TPl
 
       <span className={styles.name}>{name ?? fallbackName}</span>
       {isYou && name && <span className={styles.you}>you</span>}
+      {!isOnline && <span className={styles.offline}>offline</span>}
 
       {isActive && <span className={styles.turn}>{turnText}</span>}
 

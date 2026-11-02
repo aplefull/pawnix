@@ -66,6 +66,7 @@ export const Game = () => {
     <div className={styles.page}>
       <PlayerBar
         player={opponent}
+        uid={players[opponent]}
         name={names[opponent]}
         isYou={false}
         isActive={!isWaiting && !winner && !isYourTurn}
@@ -82,6 +83,7 @@ export const Game = () => {
       </div>
       <PlayerBar
         player={player}
+        uid={players[player]}
         name={names[player]}
         isYou
         isActive={!isWaiting && !winner && isYourTurn}

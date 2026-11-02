@@ -12,15 +12,21 @@ import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 // CONSTANTS
 import { EMULATOR_PROJECT_ID, FIREBASE_CONFIG } from '@constants';
 
-const useEmulators = import.meta.env.MODE === 'emulators';
+export const isEmulatorMode = import.meta.env.MODE === 'emulators';
 
-const app = initializeApp(useEmulators ? { ...FIREBASE_CONFIG, projectId: EMULATOR_PROJECT_ID } : FIREBASE_CONFIG);
+const EMULATOR_CONFIG = {
+  ...FIREBASE_CONFIG,
+  projectId: EMULATOR_PROJECT_ID,
+  databaseURL: `https://${EMULATOR_PROJECT_ID}-default-rtdb.firebaseio.com`,
+};
+
+export const app = initializeApp(isEmulatorMode ? EMULATOR_CONFIG : FIREBASE_CONFIG);
 
 export const db = getFirestore(app);
 
 export const auth = initializeAuth(app, { persistence: browserSessionPersistence });
 
-if (useEmulators) {
+if (isEmulatorMode) {
   connectFirestoreEmulator(db, '127.0.0.1', 8080);
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
 }
