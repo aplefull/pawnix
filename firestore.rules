@@ -23,7 +23,7 @@ service cloud.firestore {
       }
 
       function seatsOf(game) {
-        return game == 'quoridor' ? ['One', 'Two'] : [];
+        return game in ['quoridor', 'word-pairs'] ? ['One', 'Two'] : [];
       }
 
       function hasSeats(value, seats) {
@@ -49,11 +49,23 @@ service cloud.firestore {
       }
 
       function isNewGame(data) {
-        return data.game == 'quoridor' && quoridorIsNewRoom(data);
+        return (data.game == 'quoridor' && quoridorIsNewRoom(data))
+          || (data.game == 'word-pairs' && wordPairsIsInitial(data.state));
       }
 
       function isGameUpdate(players, before, after) {
-        return resource.data.game == 'quoridor' && quoridorIsUpdate(players, before, after);
+        let game = resource.data.game;
+
+        return (game == 'quoridor' && quoridorIsUpdate(players, before, after))
+          || (game == 'word-pairs' && wordPairsIsUpdate(players, before, after));
+      }
+
+      function canReadSecret(room, secret) {
+        return room.game == 'word-pairs' && wordPairsCanReadSecret(room.state, secret);
+      }
+
+      function isSecretWrite(room, seat, secret) {
+        return room.game == 'word-pairs' && wordPairsIsSecretWrite(room, seat, secret);
       }
 
       function isValidNewRoom() {
@@ -185,9 +197,139 @@ service cloud.firestore {
         return quoridorIsTurn(players, before, after) || quoridorIsRestart(before, after);
       }
 
+      function wordPairsStateKeys() {
+        return ['language', 'totalRounds', 'round', 'phase', 'matcher', 'nouns', 'adjectives', 'guess', 'scores'];
+      }
+
+      function wordPairsGuesser(state) {
+        return state.matcher == 'One' ? 'Two' : 'One';
+      }
+
+      function wordPairsIsWords(words) {
+        return words is list && words.size() == 5 && words.toSet().size() == 5;
+      }
+
+      function wordPairsIsPairing(pairing) {
+        return pairing is list && pairing.size() == 5 && pairing.toSet() == [0, 1, 2, 3, 4].toSet();
+      }
+
+      function wordPairsIsInitial(state) {
+        return state.keys().hasOnly(wordPairsStateKeys())
+          && state.keys().hasAll(wordPairsStateKeys())
+          && state.language in ['ru', 'en']
+          && state.totalRounds in [2, 4, 6, 8, 10]
+          && state.round == 1
+          && state.phase == 'matching'
+          && state.matcher == 'One'
+          && wordPairsIsWords(state.nouns)
+          && wordPairsIsWords(state.adjectives)
+          && state.guess == null
+          && state.scores == { 'One': 0, 'Two': 0 };
+      }
+
+      function wordPairsIsSubmittingPairing(players, before, after) {
+        let secret = getAfter(/databases/$(database)/documents/rooms/$(roomId)/private/$(before.matcher));
+
+        return before.phase == 'matching'
+          && players[before.matcher] == uid()
+          && after.diff(before).affectedKeys().hasOnly(['phase'])
+          && after.phase == 'guessing'
+          && secret != null
+          && secret.data.round == before.round;
+      }
+
+      function wordPairsIsGuessing(players, before, after) {
+        return before.phase == 'guessing'
+          && players[wordPairsGuesser(before)] == uid()
+          && after.diff(before).affectedKeys().hasOnly(['phase', 'guess'])
+          && after.phase == 'reveal'
+          && wordPairsIsPairing(after.guess);
+      }
+
+      function wordPairsIsScored(before, after) {
+        let guesser = wordPairsGuesser(before);
+
+        return after.scores.keys().hasOnly(['One', 'Two'])
+          && after.scores[before.matcher] == before.scores[before.matcher]
+          && after.scores[guesser] >= before.scores[guesser]
+          && after.scores[guesser] <= before.scores[guesser] + 5;
+      }
+
+      function wordPairsIsNextRound(before, after) {
+        return before.phase == 'reveal'
+          && before.round < before.totalRounds
+          && after.diff(before).affectedKeys().hasOnly(['phase', 'round', 'matcher', 'nouns', 'adjectives', 'guess', 'scores'])
+          && after.phase == 'matching'
+          && after.round == before.round + 1
+          && after.matcher == wordPairsGuesser(before)
+          && wordPairsIsWords(after.nouns)
+          && wordPairsIsWords(after.adjectives)
+          && after.guess == null
+          && wordPairsIsScored(before, after);
+      }
+
+      function wordPairsIsFinishing(before, after) {
+        return before.phase == 'reveal'
+          && before.round == before.totalRounds
+          && after.diff(before).affectedKeys().hasOnly(['phase', 'scores'])
+          && after.phase == 'finished'
+          && wordPairsIsScored(before, after);
+      }
+
+      function wordPairsIsRematch(before, after) {
+        return before.phase == 'finished'
+          && wordPairsIsInitial(after)
+          && after.language == before.language
+          && after.totalRounds == before.totalRounds;
+      }
+
+      function wordPairsIsUpdate(players, before, after) {
+        return wordPairsIsSubmittingPairing(players, before, after)
+          || wordPairsIsGuessing(players, before, after)
+          || wordPairsIsNextRound(before, after)
+          || wordPairsIsFinishing(before, after)
+          || wordPairsIsRematch(before, after);
+      }
+
+      function wordPairsCanReadSecret(state, secret) {
+        return secret.round < state.round
+          || (secret.round == state.round && state.phase in ['reveal', 'finished']);
+      }
+
+      function wordPairsIsSecretWrite(room, seat, secret) {
+        return isFull(room.players)
+          && room.state.phase == 'matching'
+          && room.state.matcher == seat
+          && secret.keys().hasOnly(['round', 'pairing'])
+          && secret.keys().hasAll(['round', 'pairing'])
+          && secret.round == room.state.round
+          && wordPairsIsPairing(secret.pairing);
+      }
+
       allow get: if request.auth != null;
       allow create: if request.auth != null && isValidNewRoom();
       allow update: if request.auth != null && (isClaimingSeat() || isUpdatingState());
+
+      match /private/{seat} {
+        function room() {
+          return get(/databases/$(database)/documents/rooms/$(roomId)).data;
+        }
+
+        function canGetSecret() {
+          let current = room();
+
+          return current.players[seat] == uid() || (isSeated(current.players) && canReadSecret(current, resource.data));
+        }
+
+        function canWriteSecret() {
+          let current = room();
+
+          return current.players[seat] == uid() && isSecretWrite(current, seat, request.resource.data);
+        }
+
+        allow get: if request.auth != null && canGetSecret();
+        allow create, update: if request.auth != null && canWriteSecret();
+      }
     }
   }
 }
