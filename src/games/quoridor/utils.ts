@@ -45,6 +45,16 @@ const getMoveDirection = (currentPos: Position, desirablePos: Position) => {
   }
 };
 
+const isWallBetween = (from: Position, to: Position, walls: Position[]) => {
+  const direction = getMoveDirection(from, to);
+
+  if (direction === 'LEFT' || direction === 'RIGHT') {
+    return walls.filter((el) => el.row === from.row).some((el) => isBetween(el.col, from.col, to.col));
+  }
+
+  return walls.filter((el) => el.col === from.col).some((el) => isBetween(el.row, from.row, to.row));
+};
+
 export const isLegalMove = (
   playerOnePos: Position,
   playerTwoPos: Position,
@@ -64,16 +74,7 @@ export const isLegalMove = (
 
   if (tooFar || samePos || enemyObstructing) return false;
 
-  const direction = getMoveDirection(currentPlayerPosition, desirablePos);
-  if (direction === 'LEFT' || direction === 'RIGHT') {
-    return !walls
-      .filter((el) => el.row === currentPlayerPosition.row)
-      .some((el) => isBetween(el.col, currentPlayerPosition.col, desirablePos.col));
-  } else {
-    return !walls
-      .filter((el) => el.col === currentPlayerPosition.col)
-      .some((el) => isBetween(el.row, currentPlayerPosition.row, desirablePos.row));
-  }
+  return !isWallBetween(currentPlayerPosition, desirablePos, walls);
 };
 
 export const availableMoves = (currentPosition: Position, walls: Position[]) => {
@@ -107,7 +108,7 @@ export const availableMovesWithPlayer = (
     (position) => isLegalMove(playerOnePos, playerTwoPos, position, currentPlayer, walls) && !isOutOfBounds(position)
   );
 
-  if (isEnemyNearby(playerOnePos, playerTwoPos)) {
+  if (isEnemyNearby(playerOnePos, playerTwoPos) && !isWallBetween(currentPosition, enemyPosition, walls)) {
     const moveDir = getMoveDirection(currentPosition, enemyPosition);
     let newMove: Position;
     switch (moveDir) {
@@ -132,7 +133,7 @@ export const availableMovesWithPlayer = (
     } else {
       getFourAdjacentPositions(enemyPosition)
         .filter((pos) => {
-          return isLegalMove(enemyPosition, currentPosition, pos, PLAYERS.PLAYER_1, walls);
+          return !isOutOfBounds(pos) && isLegalMove(enemyPosition, currentPosition, pos, PLAYERS.PLAYER_1, walls);
         })
         .forEach((pos) => {
           possiblePositions.push(pos);
