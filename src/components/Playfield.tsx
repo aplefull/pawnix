@@ -1,6 +1,5 @@
 // LIBRARIES
 import cx from 'classnames';
-import { some } from 'lodash';
 import { useSelector } from 'react-redux';
 import { memo, useCallback, useMemo, useState } from 'react';
 // REDUX
@@ -8,6 +7,7 @@ import { RootState, Position } from '@redux';
 // UTILS
 import {
   availableMovesWithPlayer,
+  containsPosition,
   doesPlayerHaveWalls,
   isCurrentPlayerTurn,
   isHorizontalIntersection,
@@ -89,9 +89,9 @@ export const Playfield = memo(() => {
         const position = useMemo(() => getRowCol(i), [i]);
         const { row, col } = position;
 
-        const isHovered = some(hovered, position);
-        const isPlaced = some(placed, position);
-        const canGoHere = some(availableMoves, position);
+        const isHovered = containsPosition(hovered, position);
+        const isPlaced = containsPosition(placed, position);
+        const canGoHere = containsPosition(availableMoves, position);
 
         const isVertIntersection = isVerticalIntersection(position, placedAndHovered);
         const isHorIntersection = isHorizontalIntersection(position, placedAndHovered);

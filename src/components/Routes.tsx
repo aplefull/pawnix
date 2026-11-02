@@ -1,5 +1,4 @@
 // LIBRARIES
-import { validate } from 'uuid';
 import { useDispatch } from 'react-redux';
 import { createBrowserRouter, Navigate, Params, RouterProvider } from 'react-router';
 import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
@@ -11,6 +10,8 @@ import { db } from '@main';
 import { IndexPage, ErrorPage, PlayPage } from '@pages';
 // CONSTANTS
 import { PLAYERS } from '@constants';
+// UTILS
+import { isUuid } from '@utils';
 
 export const Routes = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -19,7 +20,7 @@ export const Routes = () => {
     const promise = new Promise<number>(async (resolve, reject) => {
       const { roomId, player } = params;
 
-      if (!roomId || !validate(roomId)) {
+      if (!roomId || !isUuid(roomId)) {
         reject(`Invalid room id: ${roomId}`);
         return;
       }

@@ -1,7 +1,6 @@
 // LIBRARIES
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { cloneDeep } from 'lodash';
 // CONSTANTS
 import { PLAYFIELD_SIZE, PLAYERS } from '@constants';
 // REDUX
@@ -143,7 +142,7 @@ export const move = createAsyncThunk<InitialPlayfieldState, Position, { state: R
       return playfield;
     }
 
-    const newState = cloneDeep(playfield);
+    const newState = structuredClone(playfield);
 
     if (player === PLAYERS.PLAYER_1) {
       newState.playerOnePos = data;
@@ -184,7 +183,7 @@ export const place = createAsyncThunk<InitialPlayfieldState, Position[], { state
       return playfield;
     }
 
-    const newState = cloneDeep(playfield);
+    const newState = structuredClone(playfield);
 
     newState.placed = [...placed, ...data];
     if (player === PLAYERS.PLAYER_1) {

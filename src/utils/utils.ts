@@ -1,7 +1,6 @@
 // LIBRARIES
 import path from 'ngraph.path';
 import createGraph from 'ngraph.graph';
-import { filter, intersectionWith, isEqual, isEmpty, concat, some, sample } from 'lodash';
 // REDUX
 import { Player, Position } from '@redux';
 // CONSTANTS
@@ -16,6 +15,24 @@ const isBetween = (num: number, val1: number, val2: number) => {
 
 const notNull = <T>(value: T | null): value is T => {
   return value !== null;
+};
+
+const sample = <T>(array: T[]) => {
+  return array[Math.floor(Math.random() * array.length)];
+};
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export const isUuid = (value: string) => {
+  return UUID_REGEX.test(value);
+};
+
+export const isSamePosition = (a: Position, b: Position) => {
+  return a.row === b.row && a.col === b.col;
+};
+
+export const containsPosition = (positions: Position[], position: Position) => {
+  return positions.some((el) => isSamePosition(el, position));
 };
 
 const getMoveDirection = (currentPos: Position, desirablePos: Position) => {
@@ -55,19 +72,19 @@ export const isLegalMove = (
 
   const tooFar = rowDiff + colDiff > 2;
   const samePos = rowDiff + colDiff === 0;
-  const enemyObstructing = isEqual(desirablePos, enemyPosition);
+  const enemyObstructing = isSamePosition(desirablePos, enemyPosition);
 
   if (tooFar || samePos || enemyObstructing) return false;
 
   const direction = getMoveDirection(currentPlayerPosition, desirablePos);
   if (direction === 'LEFT' || direction === 'RIGHT') {
-    return !filter(walls, (el) => el.row === currentPlayerPosition.row).some((el) =>
-      isBetween(el.col, currentPlayerPosition.col, desirablePos.col)
-    );
+    return !walls
+      .filter((el) => el.row === currentPlayerPosition.row)
+      .some((el) => isBetween(el.col, currentPlayerPosition.col, desirablePos.col));
   } else {
-    return !filter(walls, (el) => el.col === currentPlayerPosition.col).some((el) =>
-      isBetween(el.row, currentPlayerPosition.row, desirablePos.row)
-    );
+    return !walls
+      .filter((el) => el.col === currentPlayerPosition.col)
+      .some((el) => isBetween(el.row, currentPlayerPosition.row, desirablePos.row));
   }
 };
 
@@ -159,7 +176,7 @@ export const isEnemyNearby = (playerOnePos: Position, playerTwoPos: Position) =>
 };
 
 export const isLegalWallPlacement = (newCoords: Position[], walls: Position[]) => {
-  return isEmpty(intersectionWith(walls, newCoords, isEqual));
+  return !newCoords.some((coord) => containsPosition(walls, coord));
 };
 
 export const isCurrentPlayerTurn = (turn: Player, currentPlayer: Player) => {
@@ -236,7 +253,7 @@ export const isBlockingPath = (
   newCoords: Position[],
   placed: Position[]
 ) => {
-  const allWalls = concat(newCoords, placed);
+  const allWalls = [...newCoords, ...placed];
   const graph = createGraph();
 
   const playerOneGoal = PLAYFIELD_INITIAL_STATE[0]
@@ -280,12 +297,12 @@ export const isBlockingPath = (
 
 export const isHorizontalIntersection = (wall: Position, walls: Position[]) => {
   const { row, col } = wall;
-  return some(walls, { row: row, col: col + 1 }) && some(walls, { row: row, col: col - 1 });
+  return containsPosition(walls, { row: row, col: col + 1 }) && containsPosition(walls, { row: row, col: col - 1 });
 };
 
 export const isVerticalIntersection = (wall: Position, walls: Position[]) => {
   const { row, col } = wall;
-  return some(walls, { row: row + 1, col: col }) && some(walls, { row: row - 1, col: col });
+  return containsPosition(walls, { row: row + 1, col: col }) && containsPosition(walls, { row: row - 1, col: col });
 };
 
 export const getRandomGif = (isWinner: boolean) => {

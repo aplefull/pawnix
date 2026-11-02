@@ -1,7 +1,6 @@
 // LIBRARIES
 import { ChangeEvent, memo, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { v4, validate } from 'uuid';
 import { useNavigate } from 'react-router';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { Button, Loader, Paper, TextInput } from '@mantine/core';
@@ -9,6 +8,8 @@ import { Button, Loader, Paper, TextInput } from '@mantine/core';
 import { Player, selectPlayer, setRoomId, createNewRoom, AppDispatch } from '@redux';
 // CONSTANTS
 import { MENU_STATES, PLAYERS } from '@constants';
+// UTILS
+import { isUuid } from '@utils';
 // STYLES
 import styles from '@styles/components/menu.module.scss';
 // FIREBASE
@@ -39,7 +40,7 @@ const MenuContentSwitch = memo(({ id, menuState, handleStateChange }: TMenuConte
   };
 
   const handleIdInput = async (e: ChangeEvent<HTMLInputElement>) => {
-    if (validate(e.target.value)) {
+    if (isUuid(e.target.value)) {
       setLoading(true);
 
       const docRef = doc(db, 'rooms', e.target.value);
@@ -131,7 +132,7 @@ const MenuContentSwitch = memo(({ id, menuState, handleStateChange }: TMenuConte
 export const Menu = memo(() => {
   const [menuState, setMenuState] = useState<keyof typeof MENU_STATES>(MENU_STATES.INITIAL);
 
-  const id = useMemo(() => v4(), []);
+  const id = useMemo(() => crypto.randomUUID(), []);
 
   const handleReturn = () => {
     setMenuState(MENU_STATES.INITIAL);

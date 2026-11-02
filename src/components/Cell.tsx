@@ -1,12 +1,11 @@
 // LIBRARIES
 import { memo } from 'react';
-import { some } from 'lodash';
 import classNames from 'classnames';
 import { useDispatch, useSelector } from 'react-redux';
 // REDUX
 import { move, Position, AppDispatch, RootState } from '@redux';
 // UTILS
-import { availableMovesWithPlayer, isCurrentPlayerTurn } from '@utils';
+import { availableMovesWithPlayer, containsPosition, isCurrentPlayerTurn } from '@utils';
 // STYLES
 import styles from '@styles/components/cell.module.scss';
 
@@ -26,7 +25,7 @@ export const Cell = memo(
 
     const handleClick = () => {
       if (
-        some(availableMovesWithPlayer(playerOnePos, playerTwoPos, player, placed), position) &&
+        containsPosition(availableMovesWithPlayer(playerOnePos, playerTwoPos, player, placed), position) &&
         isCurrentPlayerTurn(turn, player)
       ) {
         dispatch(move(position));
