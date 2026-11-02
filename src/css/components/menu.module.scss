@@ -99,3 +99,14 @@
 .back {
   align-self: center;
 }
+
+.code-input input {
+  font-size: var(--font-size-md);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+
+  &::placeholder {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+}

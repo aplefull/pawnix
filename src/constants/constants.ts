@@ -8,6 +8,14 @@ export const FIREBASE_CONFIG = {
   appId: '1:1020112765303:web:d575477aa29fe6d040a172',
 };
 
+export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+export const ROOM_CODE_LENGTH = 6;
+
+export const ROOM_CODE_ATTEMPTS = 5;
+
+export const ROOM_TTL_DAYS = 7;
+
 export const MENU_STATES = {
   INITIAL: 'INITIAL',
   SELECT_PLAYER: 'SELECT_PLAYER',

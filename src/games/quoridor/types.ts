@@ -25,7 +25,3 @@ export type GameState = {
   turn: Player;
   winner: Player | null;
 };
-
-export type RoomData = GameState & {
-  players: Players;
-};

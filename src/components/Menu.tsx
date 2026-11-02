@@ -1,24 +1,22 @@
 // LIBRARIES
-import { type ChangeEvent, memo, useMemo, useState } from 'react';
+import { type ChangeEvent, memo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { doc, getDoc } from 'firebase/firestore';
 // GAMES
-import { type Player, PLAYER_NAMES, PLAYERS, Pawn, type RoomData, useGameStore } from '@games/quoridor';
+import { GAME_ID, INITIAL_GAME_STATE, type Player, PLAYER_NAMES, PLAYERS, Pawn, SEATS } from '@games/quoridor';
 // COMPONENTS
 import { Button, Panel, Spinner, TextInput } from '@components';
 // CONSTANTS
-import { MENU_STATES } from '@constants';
+import { MENU_STATES, ROOM_CODE_LENGTH } from '@constants';
 // UTILS
-import { isUuid, logger } from '@utils';
+import { getSeatOf, isRoomCode, isRoomFull, logger, normalizeRoomCode } from '@utils';
 // SERVICES
-import { db, ensureSignedIn } from '@services';
+import { createRoom, ensureSignedIn, fetchRoom } from '@services';
 // STYLES
 import styles from '@styles/components/menu.module.scss';
 
 type TMenuState = keyof typeof MENU_STATES;
 
 type TMenuContentSwitchProps = {
-  id: string;
   menuState: TMenuState;
   handleStateChange: (state: TMenuState) => void;
 };
@@ -29,27 +27,24 @@ const JoinRoom = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleIdInput = async (e: ChangeEvent<HTMLInputElement>) => {
-    const roomId = e.target.value.trim();
+  const handleCodeInput = async (e: ChangeEvent<HTMLInputElement>) => {
+    const roomId = normalizeRoomCode(e.target.value);
     setError(null);
 
-    if (!isUuid(roomId)) return;
+    if (!isRoomCode(roomId)) return;
 
     setLoading(true);
 
     try {
       const user = await ensureSignedIn();
-      const docSnap = await getDoc(doc(db, 'rooms', roomId));
+      const room = await fetchRoom(roomId);
 
-      if (!docSnap.exists()) {
+      if (!room) {
         setError("This room doesn't exist. Check the code and try again.");
         return;
       }
 
-      const { players } = docSnap.data() as RoomData;
-      const isSeated = players.One === user.uid || players.Two === user.uid;
-
-      if (players.One && players.Two && !isSeated) {
+      if (isRoomFull(room.players) && !getSeatOf(room.players, user.uid)) {
         setError('This room is full.');
         return;
       }
@@ -67,11 +62,14 @@ const JoinRoom = () => {
     <div className={styles.section}>
       <TextInput
         label="Room code"
-        placeholder="Paste the room code"
+        placeholder="Enter the room code"
         autoComplete="off"
+        autoCapitalize="characters"
         spellCheck={false}
+        maxLength={ROOM_CODE_LENGTH}
+        className={styles.codeInput}
         autoFocus
-        onChange={handleIdInput}
+        onChange={handleCodeInput}
         disabled={loading}
         error={error}
       />
@@ -85,9 +83,8 @@ const JoinRoom = () => {
   );
 };
 
-const SelectPlayer = ({ id }: { id: string }) => {
+const SelectPlayer = () => {
   const navigate = useNavigate();
-  const createRoom = useGameStore((state) => state.createRoom);
 
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,8 +94,8 @@ const SelectPlayer = ({ id }: { id: string }) => {
     setError(null);
 
     try {
-      await createRoom(id, value);
-      navigate(`/play/${id}`);
+      const roomId = await createRoom({ game: GAME_ID, seats: SEATS, seat: value, state: INITIAL_GAME_STATE });
+      navigate(`/play/${roomId}`);
     } catch (err) {
       logger.error(err);
       setError("Couldn't create a room. Try again.");
@@ -132,7 +129,7 @@ const SelectPlayer = ({ id }: { id: string }) => {
   );
 };
 
-const MenuContentSwitch = memo(({ id, menuState, handleStateChange }: TMenuContentSwitchProps) => {
+const MenuContentSwitch = memo(({ menuState, handleStateChange }: TMenuContentSwitchProps) => {
   switch (menuState) {
     case MENU_STATES.INITIAL:
       return (
@@ -147,7 +144,7 @@ const MenuContentSwitch = memo(({ id, menuState, handleStateChange }: TMenuConte
       );
 
     case MENU_STATES.SELECT_PLAYER:
-      return <SelectPlayer id={id} />;
+      return <SelectPlayer />;
 
     case MENU_STATES.JOIN_ROOM:
       return <JoinRoom />;
@@ -159,8 +156,6 @@ const MenuContentSwitch = memo(({ id, menuState, handleStateChange }: TMenuConte
 
 export const Menu = memo(() => {
   const [menuState, setMenuState] = useState<TMenuState>(MENU_STATES.INITIAL);
-
-  const id = useMemo(() => crypto.randomUUID(), []);
 
   const handleReturn = () => {
     setMenuState(MENU_STATES.INITIAL);
@@ -177,7 +172,7 @@ export const Menu = memo(() => {
         )}
       </header>
 
-      <MenuContentSwitch handleStateChange={setMenuState} menuState={menuState} id={id} />
+      <MenuContentSwitch handleStateChange={setMenuState} menuState={menuState} />
 
       {canReturn && (
         <Button variant="ghost" size="sm" className={styles.back} onClick={handleReturn}>

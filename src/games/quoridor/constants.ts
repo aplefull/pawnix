@@ -1,3 +1,6 @@
+// TYPES
+import type { GameState, Players } from './types';
+
 export const ELEMENTS = {
   TILE: 'tile',
   VERTICAL_WALL: 'vertical_wall',
@@ -80,3 +83,19 @@ export const PLAYFIELD_INITIAL_STATE = [
 ];
 
 export const PLAYFIELD_SIZE = PLAYFIELD_INITIAL_STATE.length - 1;
+
+export const GAME_ID = 'quoridor';
+
+export const SEATS = [PLAYERS.PLAYER_1, PLAYERS.PLAYER_2] as const;
+
+export const EMPTY_SEATS: Players = { [PLAYERS.PLAYER_1]: null, [PLAYERS.PLAYER_2]: null };
+
+export const INITIAL_GAME_STATE: GameState = {
+  walls: [],
+  playerOnePos: { row: PLAYFIELD_SIZE, col: 8 },
+  playerTwoPos: { row: 0, col: 8 },
+  playerOneWallsLeft: WALLS_PER_PLAYER,
+  playerTwoWallsLeft: WALLS_PER_PLAYER,
+  turn: PLAYERS.PLAYER_1,
+  winner: null,
+};

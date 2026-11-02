@@ -10,7 +10,8 @@ import {
   PlayerBar,
   PLAYERS,
   Playfield,
-  useGameStore,
+  restartGame,
+  useQuoridor,
 } from '@games/quoridor';
 // UTILS
 import { logger } from '@utils';
@@ -25,7 +26,6 @@ type TEndScreenProps = {
 };
 
 const EndScreen = ({ winner, player }: TEndScreenProps) => {
-  const restartGame = useGameStore((state) => state.restartGame);
   const isWinner = winner === player;
 
   const handleRestart = () => {
@@ -62,7 +62,7 @@ const WaitingScreen = ({ roomId }: { roomId: string }) => {
 };
 
 const Game = () => {
-  const { winner, turn, player, players, roomId, playerOneWallsLeft, playerTwoWallsLeft } = useGameStore(
+  const { winner, turn, player, players, roomId, playerOneWallsLeft, playerTwoWallsLeft } = useQuoridor(
     useShallow((state) => ({
       winner: state.winner,
       turn: state.turn,

@@ -2,7 +2,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/shallow';
 // STORE
-import { useGameStore } from '../gameStore';
+import { movePawn, placeWall, useQuoridor } from '../store';
 import type { Player, Position } from '../types';
 // UTILS
 import {
@@ -45,31 +45,19 @@ const getGoalOwner = (position: Position): Player | null => {
 
 export const Playfield = memo(() => {
   const [hoveredSlot, setHoveredSlot] = useState<Position | null>(null);
-  const {
-    walls,
-    players,
-    turn,
-    player,
-    playerOneWallsLeft,
-    playerTwoWallsLeft,
-    playerOnePos,
-    playerTwoPos,
-    move,
-    place,
-  } = useGameStore(
-    useShallow((state) => ({
-      walls: state.walls,
-      players: state.players,
-      turn: state.turn,
-      player: state.player,
-      playerOneWallsLeft: state.playerOneWallsLeft,
-      playerTwoWallsLeft: state.playerTwoWallsLeft,
-      playerOnePos: state.playerOnePos,
-      playerTwoPos: state.playerTwoPos,
-      move: state.move,
-      place: state.place,
-    }))
-  );
+  const { walls, players, turn, player, playerOneWallsLeft, playerTwoWallsLeft, playerOnePos, playerTwoPos } =
+    useQuoridor(
+      useShallow((state) => ({
+        walls: state.walls,
+        players: state.players,
+        turn: state.turn,
+        player: state.player,
+        playerOneWallsLeft: state.playerOneWallsLeft,
+        playerTwoWallsLeft: state.playerTwoWallsLeft,
+        playerOnePos: state.playerOnePos,
+        playerTwoPos: state.playerTwoPos,
+      }))
+    );
 
   const placed = useMemo(() => walls.flatMap(getWallCells), [walls]);
 
@@ -98,12 +86,9 @@ export const Playfield = memo(() => {
     return getWallPlacement(hoveredSlot);
   }, [canPlace, hoveredSlot, getWallPlacement]);
 
-  const handleMove = useCallback(
-    (position: Position) => {
-      move(position);
-    },
-    [move]
-  );
+  const handleMove = useCallback((position: Position) => {
+    movePawn(position);
+  }, []);
 
   const handleWallHover = useCallback((position: Position) => {
     setHoveredSlot(position);
@@ -119,9 +104,9 @@ export const Playfield = memo(() => {
       if (!isValid) return;
 
       setHoveredSlot(null);
-      place(wall);
+      placeWall(wall);
     },
-    [place, getWallPlacement]
+    [getWallPlacement]
   );
 
   const getOccupant = (position: Position) => {

@@ -6,31 +6,104 @@ service cloud.firestore {
         return request.auth.uid;
       }
 
-      function isSeated(data) {
-        return data.players.One == uid() || data.players.Two == uid();
-      }
-
-      function seatOf(data) {
-        return data.players.One == uid() ? 'One' : 'Two';
-      }
-
-      function opponentOf(seat) {
-        return seat == 'One' ? 'Two' : 'One';
-      }
-
-      function posKey(seat) {
-        return seat == 'One' ? 'playerOnePos' : 'playerTwoPos';
-      }
-
-      function wallsLeftKey(seat) {
-        return seat == 'One' ? 'playerOneWallsLeft' : 'playerTwoWallsLeft';
-      }
-
       function changedKeys() {
         return request.resource.data.diff(resource.data).affectedKeys();
       }
 
-      function isTile(pos) {
+      function isSeated(players) {
+        return uid() in players.values();
+      }
+
+      function isFull(players) {
+        return !(null in players.values());
+      }
+
+      function occupiedCount(players) {
+        return players.values().removeAll([null]).size();
+      }
+
+      function hasSeats(players, seats) {
+        return players.keys().hasOnly(seats) && players.keys().hasAll(seats);
+      }
+
+      function isNewGame(data) {
+        return data.game == 'quoridor' && quoridorIsNewRoom(data);
+      }
+
+      function isGameUpdate(players, before, after) {
+        return resource.data.game == 'quoridor' && quoridorIsUpdate(players, before, after);
+      }
+
+      function isValidNewRoom() {
+        let data = request.resource.data;
+
+        return roomId.matches('^[A-HJKMNP-Z2-9]{6}$')
+          && data.keys().hasOnly(['game', 'players', 'state', 'createdAt', 'expiresAt'])
+          && data.createdAt == request.time
+          && data.expiresAt is timestamp
+          && data.expiresAt > request.time
+          && data.expiresAt < request.time + duration.value(8, 'd')
+          && data.players is map
+          && data.players.values().removeAll([null]) == [uid()]
+          && isNewGame(data);
+      }
+
+      function isClaimingSeat() {
+        let before = resource.data.players;
+        let after = request.resource.data.players;
+        let seats = after.diff(before);
+
+        return changedKeys().hasOnly(['players'])
+          && !isSeated(before)
+          && seats.addedKeys().size() == 0
+          && seats.removedKeys().size() == 0
+          && seats.changedKeys().size() == 1
+          && after.values().removeAll(before.values()) == [uid()]
+          && occupiedCount(after) == occupiedCount(before) + 1;
+      }
+
+      function isUpdatingState() {
+        let players = resource.data.players;
+
+        return changedKeys().hasOnly(['state'])
+          && isSeated(players)
+          && isFull(players)
+          && isGameUpdate(players, resource.data.state, request.resource.data.state);
+      }
+
+      function quoridorInitialState() {
+        return {
+          'walls': [],
+          'playerOnePos': { 'row': 16, 'col': 8 },
+          'playerTwoPos': { 'row': 0, 'col': 8 },
+          'playerOneWallsLeft': 10,
+          'playerTwoWallsLeft': 10,
+          'turn': 'One',
+          'winner': null
+        };
+      }
+
+      function quoridorIsInitial(state) {
+        return state == quoridorInitialState();
+      }
+
+      function quoridorIsNewRoom(data) {
+        return hasSeats(data.players, ['One', 'Two']) && quoridorIsInitial(data.state);
+      }
+
+      function quoridorOpponentOf(seat) {
+        return seat == 'One' ? 'Two' : 'One';
+      }
+
+      function quoridorPosKey(seat) {
+        return seat == 'One' ? 'playerOnePos' : 'playerTwoPos';
+      }
+
+      function quoridorWallsLeftKey(seat) {
+        return seat == 'One' ? 'playerOneWallsLeft' : 'playerTwoWallsLeft';
+      }
+
+      function quoridorIsTile(pos) {
         return pos is map
           && pos.keys().hasOnly(['row', 'col'])
           && pos.row is int && pos.col is int
@@ -38,7 +111,7 @@ service cloud.firestore {
           && pos.row % 2 == 0 && pos.col % 2 == 0;
       }
 
-      function isWall(wall) {
+      function quoridorIsWall(wall) {
         return wall is map
           && wall.keys().hasOnly(['row', 'col', 'orientation'])
           && wall.row is int && wall.col is int
@@ -47,86 +120,50 @@ service cloud.firestore {
           && wall.orientation in ['horizontal', 'vertical'];
       }
 
-      function isInitialGame(data) {
-        return data.playerOnePos == { 'row': 16, 'col': 8 }
-          && data.playerTwoPos == { 'row': 0, 'col': 8 }
-          && data.playerOneWallsLeft == 10
-          && data.playerTwoWallsLeft == 10
-          && data.walls == []
-          && data.turn == 'One'
-          && data.winner == null;
-      }
-
-      function isValidNewRoom() {
-        let data = request.resource.data;
-        let players = data.players;
-
-        return data.keys().hasOnly(['players', 'playerOnePos', 'playerTwoPos', 'playerOneWallsLeft', 'playerTwoWallsLeft', 'walls', 'turn', 'winner', 'createdAt'])
-          && players.keys().hasOnly(['One', 'Two'])
-          && players.keys().hasAll(['One', 'Two'])
-          && ((players.One == uid() && players.Two == null) || (players.Two == uid() && players.One == null))
-          && isInitialGame(data)
-          && data.createdAt == request.time;
-      }
-
-      function isClaimingSeat() {
-        let before = resource.data.players;
-        let after = request.resource.data.players;
-
-        return changedKeys().hasOnly(['players'])
-          && !isSeated(resource.data)
-          && after.keys().hasOnly(['One', 'Two'])
-          && ((before.One == null && after.One == uid() && after.Two == before.Two)
-            || (before.Two == null && after.Two == uid() && after.One == before.One));
-      }
-
-      function isMove(seat) {
-        let current = resource.data[posKey(seat)];
-        let next = request.resource.data[posKey(seat)];
+      function quoridorIsMove(seat, before, after) {
+        let current = before[quoridorPosKey(seat)];
+        let next = after[quoridorPosKey(seat)];
         let goalRow = seat == 'One' ? 0 : 16;
 
-        return changedKeys().hasOnly([posKey(seat), 'turn', 'winner'])
-          && isTile(next)
+        return after.diff(before).affectedKeys().hasOnly([quoridorPosKey(seat), 'turn', 'winner'])
+          && quoridorIsTile(next)
           && (math.abs(next.row - current.row) + math.abs(next.col - current.col)) in [2, 4]
-          && next != request.resource.data[posKey(opponentOf(seat))]
-          && request.resource.data.winner == (next.row == goalRow ? seat : null);
+          && next != after[quoridorPosKey(quoridorOpponentOf(seat))]
+          && after.winner == (next.row == goalRow ? seat : null);
       }
 
-      function isPlace(seat) {
-        let before = resource.data;
-        let after = request.resource.data;
+      function quoridorIsPlace(seat, before, after) {
         let count = before.walls.size();
+        let key = quoridorWallsLeftKey(seat);
 
-        return changedKeys().hasOnly(['walls', wallsLeftKey(seat), 'turn'])
-          && after[wallsLeftKey(seat)] == before[wallsLeftKey(seat)] - 1
-          && after[wallsLeftKey(seat)] >= 0
+        return after.diff(before).affectedKeys().hasOnly(['walls', key, 'turn'])
+          && after[key] == before[key] - 1
+          && after[key] >= 0
           && after.walls.size() == count + 1
           && (count == 0 || after.walls[0:count] == before.walls)
-          && isWall(after.walls[count]);
+          && quoridorIsWall(after.walls[count]);
       }
 
-      function isTakingTurn() {
-        let seat = seatOf(resource.data);
+      function quoridorIsTurn(players, before, after) {
+        let seat = before.turn;
 
-        return isSeated(resource.data)
-          && resource.data.players.One != null
-          && resource.data.players.Two != null
-          && resource.data.winner == null
-          && resource.data.turn == seat
-          && request.resource.data.turn == opponentOf(seat)
-          && (isMove(seat) || isPlace(seat));
+        return players[seat] == uid()
+          && before.winner == null
+          && after.turn == quoridorOpponentOf(seat)
+          && (quoridorIsMove(seat, before, after) || quoridorIsPlace(seat, before, after));
       }
 
-      function isRestarting() {
-        return isSeated(resource.data)
-          && resource.data.winner != null
-          && changedKeys().hasOnly(['playerOnePos', 'playerTwoPos', 'playerOneWallsLeft', 'playerTwoWallsLeft', 'walls', 'turn', 'winner'])
-          && isInitialGame(request.resource.data);
+      function quoridorIsRestart(before, after) {
+        return before.winner != null && quoridorIsInitial(after);
+      }
+
+      function quoridorIsUpdate(players, before, after) {
+        return quoridorIsTurn(players, before, after) || quoridorIsRestart(before, after);
       }
 
       allow get: if request.auth != null;
       allow create: if request.auth != null && isValidNewRoom();
-      allow update: if request.auth != null && (isClaimingSeat() || isTakingTurn() || isRestarting());
+      allow update: if request.auth != null && (isClaimingSeat() || isUpdatingState());
     }
   }
 }
