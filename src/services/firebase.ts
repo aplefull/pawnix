@@ -1,15 +1,29 @@
 // LIBRARIES
 import { initializeApp } from 'firebase/app';
-import { browserSessionPersistence, initializeAuth, signInAnonymously, signOut, type User } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import {
+  browserSessionPersistence,
+  connectAuthEmulator,
+  initializeAuth,
+  signInAnonymously,
+  signOut,
+  type User,
+} from 'firebase/auth';
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 // CONSTANTS
-import { FIREBASE_CONFIG } from '@constants';
+import { EMULATOR_PROJECT_ID, FIREBASE_CONFIG } from '@constants';
 
-const app = initializeApp(FIREBASE_CONFIG);
+const useEmulators = import.meta.env.MODE === 'emulators';
+
+const app = initializeApp(useEmulators ? { ...FIREBASE_CONFIG, projectId: EMULATOR_PROJECT_ID } : FIREBASE_CONFIG);
 
 export const db = getFirestore(app);
 
 export const auth = initializeAuth(app, { persistence: browserSessionPersistence });
+
+if (useEmulators) {
+  connectFirestoreEmulator(db, '127.0.0.1', 8080);
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+}
 
 const TAB_CHECK_TIMEOUT = 150;
 
