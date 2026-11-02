@@ -1,15 +1,14 @@
-@use '@variables' as *;
+@use 'board-grid' as *;
 
 .playfield {
-  border-radius: $border-radius-medium;
-  background-color: $color-dark-gray;
-  box-shadow: rgba($color-black, 65%) 0 0 15px;
-  padding: 15px;
-  display: grid;
-  grid-template-columns: repeat(17, auto);
-  place-items: center;
-}
+  @include board-grid;
 
-.upside-down {
-  transform: rotate(180deg);
+  position: relative;
+  width: var(--board-size);
+  aspect-ratio: 1;
+  background-color: var(--color-board);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  user-select: none;
+  touch-action: manipulation;
 }

@@ -217,36 +217,6 @@ export const getWallCoords = (desirablePos: Position, wallType: string): Positio
   return [];
 };
 
-export const getWallSize = (
-  sizes: {
-    cellSize: number;
-    verticalWallWidth: number;
-    verticalWallHeight: number;
-    horizontalWallWidth: number;
-    horizontalWallHeight: number;
-  },
-  type: TElements
-) => {
-  if (type === ELEMENTS.VERTICAL_WALL) {
-    return {
-      width: sizes.verticalWallWidth,
-      height: sizes.verticalWallHeight,
-    };
-  }
-
-  if (type === ELEMENTS.HORIZONTAL_WALL) {
-    return {
-      width: sizes.horizontalWallWidth,
-      height: sizes.horizontalWallHeight,
-    };
-  }
-
-  return {
-    width: sizes.verticalWallWidth,
-    height: sizes.horizontalWallHeight,
-  };
-};
-
 export const isBlockingPath = (
   playerOnePos: Position,
   playerTwoPos: Position,
@@ -295,14 +265,20 @@ export const isBlockingPath = (
   return !(canPlayerOneReachGoal && canPlayerTwoReachGoal);
 };
 
-export const isHorizontalIntersection = (wall: Position, walls: Position[]) => {
-  const { row, col } = wall;
-  return containsPosition(walls, { row: row, col: col + 1 }) && containsPosition(walls, { row: row, col: col - 1 });
+export const getElementType = (position: Position): TElements => {
+  return PLAYFIELD_INITIAL_STATE[position.row][position.col];
 };
 
-export const isVerticalIntersection = (wall: Position, walls: Position[]) => {
-  const { row, col } = wall;
-  return containsPosition(walls, { row: row + 1, col: col }) && containsPosition(walls, { row: row - 1, col: col });
+export const toDisplayPosition = (position: Position, isFlipped: boolean): Position => {
+  if (!isFlipped) return position;
+
+  return { row: PLAYFIELD_SIZE - position.row, col: PLAYFIELD_SIZE - position.col };
+};
+
+export const getGridPlacement = (position: Position, isFlipped: boolean) => {
+  const { row, col } = toDisplayPosition(position, isFlipped);
+
+  return { gridRow: row + 1, gridColumn: col + 1 };
 };
 
 export const getRandomGif = (isWinner: boolean) => {

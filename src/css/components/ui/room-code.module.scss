@@ -1,0 +1,44 @@
+.room-code {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+
+  &:hover {
+    border-color: var(--color-accent);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.code {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
+.action,
+.copied {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.action {
+  color: var(--color-accent);
+}
+
+.copied {
+  color: var(--color-player-two);
+}

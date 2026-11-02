@@ -1,10 +1,6 @@
 // COMPONENTS
-import { Routes, Providers } from '@components';
+import { Routes } from '@components';
 
 export const App = () => {
-  return (
-    <Providers>
-      <Routes />
-    </Providers>
-  );
+  return <Routes />;
 };

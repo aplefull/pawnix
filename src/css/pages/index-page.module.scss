@@ -1,7 +1,6 @@
-@use '@variables' as *;
-
 .wrapper {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: var(--space-4);
 }

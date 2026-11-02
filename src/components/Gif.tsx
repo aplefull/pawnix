@@ -1,9 +1,9 @@
 // LIBRARIES
-import React, { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 // UTILS
 import { getRandomGif } from '@utils';
 // COMPONENTS
-import { Loader } from '@mantine/core';
+import { Spinner } from '@components';
 // STYLES
 import styles from '@styles/components/gif.module.scss';
 
@@ -22,9 +22,9 @@ export const Gif = memo(({ isWinner }: TGifProps) => {
   };
 
   return (
-    <>
-      <img className={loading ? styles.hidden : styles.visible} onLoad={handleLoad} src={src} alt={altText} />
-      {loading && <Loader my={20} size="md" />}
-    </>
+    <div className={styles.frame}>
+      <img className={loading ? styles.hidden : styles.image} onLoad={handleLoad} src={src} alt={altText} />
+      {loading && <Spinner />}
+    </div>
   );
 });

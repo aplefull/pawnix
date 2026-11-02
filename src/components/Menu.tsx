@@ -1,31 +1,116 @@
 // LIBRARIES
-import { ChangeEvent, memo, useMemo, useState } from 'react';
+import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
-import { Button, Loader, Paper, TextInput } from '@mantine/core';
 // REDUX
 import { Player, selectPlayer, setRoomId, createNewRoom, AppDispatch } from '@redux';
+// COMPONENTS
+import { Button, Panel, Pawn, RoomCode, Spinner, TextInput } from '@components';
 // CONSTANTS
-import { MENU_STATES, PLAYERS } from '@constants';
+import { MENU_STATES, PLAYER_NAMES, PLAYERS } from '@constants';
 // UTILS
-import { isUuid } from '@utils';
+import { isUuid, logger } from '@utils';
+// SERVICES
+import { db } from '@services';
 // STYLES
 import styles from '@styles/components/menu.module.scss';
-// FIREBASE
-import { db } from '@main';
+
+type TMenuState = keyof typeof MENU_STATES;
 
 type TMenuContentSwitchProps = {
   id: string;
-  menuState: keyof typeof MENU_STATES;
-  handleStateChange: (state: keyof typeof MENU_STATES) => void;
+  menuState: TMenuState;
+  handleStateChange: (state: TMenuState) => void;
+};
+
+const WaitingRoom = ({ id }: { id: string }) => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const docRef = doc(db, 'rooms', id);
+
+    const unsubscribe = onSnapshot(docRef, (doc) => {
+      if (!doc.exists()) {
+        logger.error(`Room ${id} does not exist`);
+        return;
+      }
+
+      const { isGameStarted, initialPlayer } = doc.data();
+
+      if (isGameStarted) {
+        navigate(`/play/${id}/${initialPlayer}`);
+      }
+    });
+
+    return unsubscribe;
+  }, [id, navigate]);
+
+  return (
+    <div className={styles.section}>
+      <div className={styles.waiting}>
+        <Spinner size="sm" />
+        <span>Waiting for your opponent to join...</span>
+      </div>
+      <p className={styles.hint}>Send them this room code:</p>
+      <RoomCode code={id} />
+    </div>
+  );
+};
+
+const JoinRoom = () => {
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleIdInput = async (e: ChangeEvent<HTMLInputElement>) => {
+    const roomId = e.target.value.trim();
+    setError(null);
+
+    if (!isUuid(roomId)) return;
+
+    setLoading(true);
+
+    const docSnap = await getDoc(doc(db, 'rooms', roomId));
+
+    setLoading(false);
+
+    if (!docSnap.exists()) {
+      setError("This room doesn't exist. Check the code and try again.");
+      return;
+    }
+
+    const { initialPlayer } = docSnap.data();
+    const player = initialPlayer === PLAYERS.PLAYER_1 ? PLAYERS.PLAYER_2 : PLAYERS.PLAYER_1;
+
+    navigate(`/play/${roomId}/${player}`);
+  };
+
+  return (
+    <div className={styles.section}>
+      <TextInput
+        label="Room code"
+        placeholder="Paste the room code"
+        autoComplete="off"
+        spellCheck={false}
+        autoFocus
+        onChange={handleIdInput}
+        disabled={loading}
+        error={error}
+      />
+      {loading && (
+        <div className={styles.waiting}>
+          <Spinner size="sm" />
+          <span>Joining room...</span>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const MenuContentSwitch = memo(({ id, menuState, handleStateChange }: TMenuContentSwitchProps) => {
-  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-
-  const [loading, setLoading] = useState(false);
 
   const handlePlayerSelect = (value: Player) => () => {
     dispatch(selectPlayer(value));
@@ -39,98 +124,48 @@ const MenuContentSwitch = memo(({ id, menuState, handleStateChange }: TMenuConte
     handleStateChange(MENU_STATES.WAITING);
   };
 
-  const handleIdInput = async (e: ChangeEvent<HTMLInputElement>) => {
-    if (isUuid(e.target.value)) {
-      setLoading(true);
-
-      const docRef = doc(db, 'rooms', e.target.value);
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        throw new Error(`Room ${e.target.value} does not exist`);
-      }
-
-      const data = docSnap.data();
-
-      const { initialPlayer } = data;
-
-      setLoading(false);
-
-      const player = initialPlayer === PLAYERS.PLAYER_1 ? PLAYERS.PLAYER_2 : PLAYERS.PLAYER_1;
-
-      navigate(`/play/${e.target.value}/${player}`);
-    }
-  };
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(id);
-  };
-
   switch (menuState) {
     case MENU_STATES.INITIAL:
       return (
-        <>
-          <Button radius="lg" className={styles.createNew} onClick={() => handleStateChange(MENU_STATES.SELECT_PLAYER)}>
-            Create new room
+        <div className={styles.actions}>
+          <Button size="lg" fullWidth onClick={() => handleStateChange(MENU_STATES.SELECT_PLAYER)}>
+            Create room
           </Button>
-          <Button radius="lg" className={styles.join} onClick={() => handleStateChange(MENU_STATES.JOIN_ROOM)}>
+          <Button size="lg" variant="secondary" fullWidth onClick={() => handleStateChange(MENU_STATES.JOIN_ROOM)}>
             Join room
           </Button>
-        </>
+        </div>
       );
 
     case MENU_STATES.SELECT_PLAYER:
       return (
-        <>
-          <p className={styles.playerSelectText}>Select your color. (Whites go first)</p>
-          <div className={styles.playerSelect}>
-            <div className={styles.white} onClick={handlePlayerSelect(PLAYERS.PLAYER_1)} />
-            <div className={styles.black} onClick={handlePlayerSelect(PLAYERS.PLAYER_2)} />
+        <div className={styles.section}>
+          <p className={styles.hint}>Pick your pawn</p>
+          <div className={styles.pawnChoice}>
+            {[PLAYERS.PLAYER_1, PLAYERS.PLAYER_2].map((value) => (
+              <button key={value} type="button" className={styles.pawnOption} onClick={handlePlayerSelect(value)}>
+                <Pawn player={value} className={styles.pawnPreview} />
+                <span className={styles.pawnName}>{PLAYER_NAMES[value]}</span>
+                <span className={styles.pawnOrder}>{value === PLAYERS.PLAYER_1 ? 'Moves first' : 'Moves second'}</span>
+              </button>
+            ))}
           </div>
-        </>
+        </div>
       );
 
     case MENU_STATES.JOIN_ROOM:
-      return (
-        <div className={styles.joinContainer}>
-          <p>Paste in your code:</p>
-          <TextInput autoComplete="off" onChange={handleIdInput} disabled={loading} />
-          {loading && <Loader mt={20} size="md" />}
-        </div>
-      );
+      return <JoinRoom />;
 
     case MENU_STATES.WAITING:
-      const docRef = doc(db, 'rooms', id);
+      return <WaitingRoom id={id} />;
 
-      const unsub = onSnapshot(docRef, (doc) => {
-        if (!doc.exists()) {
-          throw new Error(`Room ${id} does not exist`);
-        }
-        const { isGameStarted, initialPlayer } = doc.data();
-
-        if (isGameStarted) {
-          navigate(`/play/${id}/${initialPlayer}`);
-          unsub();
-        }
-      });
-
-      return (
-        <div className={styles.waiting}>
-          <p>Waiting for second player to join...</p>
-          <p>Copy this code and send to second player:</p>
-          <div>
-            <p className={styles.id}>{id}</p>
-            <Button onClick={handleCopy}>Copy</Button>
-          </div>
-        </div>
-      );
     default:
       return null;
   }
 });
 
 export const Menu = memo(() => {
-  const [menuState, setMenuState] = useState<keyof typeof MENU_STATES>(MENU_STATES.INITIAL);
+  const [menuState, setMenuState] = useState<TMenuState>(MENU_STATES.INITIAL);
 
   const id = useMemo(() => crypto.randomUUID(), []);
 
@@ -138,16 +173,24 @@ export const Menu = memo(() => {
     setMenuState(MENU_STATES.INITIAL);
   };
 
+  const canReturn = menuState === MENU_STATES.SELECT_PLAYER || menuState === MENU_STATES.JOIN_ROOM;
+
   return (
-    <div className={styles.menu}>
-      <Paper className={styles.innerContainer} shadow="sm" radius="md" p="sm" withBorder>
-        <MenuContentSwitch handleStateChange={setMenuState} menuState={menuState} id={id} />
-      </Paper>
-      {menuState !== MENU_STATES.INITIAL && menuState !== MENU_STATES.WAITING && (
-        <span className={styles.return} onClick={handleReturn}>
-          Return
-        </span>
+    <Panel className={styles.menu}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Quoridor</h1>
+        {menuState === MENU_STATES.INITIAL && (
+          <p className={styles.tagline}>Reach the far side first. Use walls to slow your opponent down.</p>
+        )}
+      </header>
+
+      <MenuContentSwitch handleStateChange={setMenuState} menuState={menuState} id={id} />
+
+      {canReturn && (
+        <Button variant="ghost" size="sm" className={styles.back} onClick={handleReturn}>
+          Back
+        </Button>
       )}
-    </div>
+    </Panel>
   );
 });

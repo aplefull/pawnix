@@ -27,7 +27,14 @@ export const PLAYERS = {
   PLAYER_2: 'Two',
 } as const;
 
-export type TElements = typeof ELEMENTS[keyof typeof ELEMENTS];
+export const PLAYER_NAMES = {
+  [PLAYERS.PLAYER_1]: 'Ivory',
+  [PLAYERS.PLAYER_2]: 'Teal',
+} as const;
+
+export const WALLS_PER_PLAYER = 10;
+
+export type TElements = (typeof ELEMENTS)[keyof typeof ELEMENTS];
 
 const FULL_ROW = [
   'tile',

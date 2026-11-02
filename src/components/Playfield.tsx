@@ -1,123 +1,144 @@
 // LIBRARIES
-import cx from 'classnames';
-import { useSelector } from 'react-redux';
 import { memo, useCallback, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 // REDUX
-import { RootState, Position } from '@redux';
+import { move, place, AppDispatch, Player, Position, RootState } from '@redux';
 // UTILS
 import {
   availableMovesWithPlayer,
   containsPosition,
   doesPlayerHaveWalls,
+  getElementType,
+  getWallCoords,
+  isBlockingPath,
   isCurrentPlayerTurn,
-  isHorizontalIntersection,
-  isVerticalIntersection,
+  isLegalWallPlacement,
+  isSamePosition,
 } from '@utils';
-// HOOKS
-import { useWindowSize } from '@hooks';
 // COMPONENTS
-import { PlayfieldElement } from '@components';
+import { Cell, WallLayer, WallSlot } from '@components';
 // CONSTANTS
-import { PLAYERS, PLAYFIELD_INITIAL_STATE } from '@constants';
+import { ELEMENTS, PLAYERS, PLAYFIELD_INITIAL_STATE, PLAYFIELD_SIZE } from '@constants';
 // STYLES
 import styles from '@styles/components/playfield.module.scss';
 
+const ALL_POSITIONS: Position[] = PLAYFIELD_INITIAL_STATE.flatMap((row, rowIndex) =>
+  row.map((_, col) => ({ row: rowIndex, col }))
+);
+
+const TILES = ALL_POSITIONS.filter((position) => getElementType(position) === ELEMENTS.TILE);
+
+const WALL_SLOTS = ALL_POSITIONS.filter((position) => {
+  const type = getElementType(position);
+  return type === ELEMENTS.HORIZONTAL_WALL || type === ELEMENTS.VERTICAL_WALL;
+});
+
+const getGoalOwner = (position: Position): Player | null => {
+  if (position.row === 0) return PLAYERS.PLAYER_1;
+  if (position.row === PLAYFIELD_SIZE) return PLAYERS.PLAYER_2;
+  return null;
+};
+
 export const Playfield = memo(() => {
-  const { width } = useWindowSize();
-  const [hovered, setHovered] = useState<Position[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const [hoveredSlot, setHoveredSlot] = useState<Position | null>(null);
   const { placed, turn, player, playerOneWallsLeft, playerTwoWallsLeft, playerOnePos, playerTwoPos } = useSelector(
     (state: RootState) => state.playfield
   );
 
+  const isFlipped = player === PLAYERS.PLAYER_2;
+  const isCurrentTurn = isCurrentPlayerTurn(turn, player);
+  const canPlace = isCurrentTurn && doesPlayerHaveWalls(player, playerOneWallsLeft, playerTwoWallsLeft);
+
   const availableMoves = useMemo(() => {
+    if (!isCurrentTurn) return [];
     return availableMovesWithPlayer(playerOnePos, playerTwoPos, player, placed);
-  }, [playerOnePos, playerTwoPos, player, placed]);
+  }, [isCurrentTurn, playerOnePos, playerTwoPos, player, placed]);
 
-  const grid = PLAYFIELD_INITIAL_STATE.flat();
+  const getWallPlacement = useCallback(
+    (position: Position) => {
+      const coords = getWallCoords(position, getElementType(position));
+      const isValid =
+        isLegalWallPlacement(coords, placed) && !isBlockingPath(playerOnePos, playerTwoPos, coords, placed);
 
-  const getRowCol = (index: number) => {
-    const row = Math.floor(index / 17);
-    const col = index % 17;
+      return { coords, isValid };
+    },
+    [placed, playerOnePos, playerTwoPos]
+  );
 
-    return { row, col };
-  };
+  const wallPreview = useMemo(() => {
+    if (!canPlace || !hoveredSlot) return null;
+    return getWallPlacement(hoveredSlot);
+  }, [canPlace, hoveredSlot, getWallPlacement]);
 
-  const handleHover = useCallback((pos: Position[]) => {
-    setHovered(pos);
+  const handleMove = useCallback(
+    (position: Position) => {
+      dispatch(move(position));
+    },
+    [dispatch]
+  );
+
+  const handleWallHover = useCallback((position: Position) => {
+    setHoveredSlot(position);
   }, []);
 
-  const cellsInRowCount = 9;
-  const cellsInColumnCount = 9;
-  const verticalWallsInRowCount = 8;
-  const horizontalWallsInColumnCount = 8;
-  const totalMargin = 4;
-  const totalPlayfieldPadding = 30;
+  const handleWallLeave = useCallback(() => {
+    setHoveredSlot(null);
+  }, []);
 
-  const playfieldSize = width > 763 ? 700 : width * 0.9;
-  const adjustedPlayfieldSize = playfieldSize - totalPlayfieldPadding;
+  const handleWallSelect = useCallback(
+    (position: Position) => {
+      const { coords, isValid } = getWallPlacement(position);
+      if (!isValid) return;
 
-  const cellSize = adjustedPlayfieldSize / 11;
-  const verticalWallWidth =
-    (adjustedPlayfieldSize - cellSize * cellsInRowCount) / verticalWallsInRowCount - totalMargin;
-  const verticalWallHeight = cellSize;
-  const horizontalWallWidth = cellSize;
-  const horizontalWallHeight =
-    (adjustedPlayfieldSize - cellSize * cellsInColumnCount) / horizontalWallsInColumnCount - totalMargin;
+      setHoveredSlot(null);
+      dispatch(place(coords));
+    },
+    [dispatch, getWallPlacement]
+  );
 
-  const sizes = useMemo(() => {
-    return {
-      cellSize: Math.floor(cellSize),
-      verticalWallWidth: Math.floor(verticalWallWidth),
-      verticalWallHeight: Math.floor(verticalWallHeight),
-      horizontalWallWidth: Math.floor(horizontalWallWidth),
-      horizontalWallHeight: Math.floor(horizontalWallHeight),
-    };
-  }, [cellSize, verticalWallWidth, verticalWallHeight, horizontalWallWidth, horizontalWallHeight]);
-
-  const style = {
-    width: `${playfieldSize}px`,
-    height: `${playfieldSize}px`,
+  const getOccupant = (position: Position) => {
+    if (isSamePosition(position, playerOnePos)) return PLAYERS.PLAYER_1;
+    if (isSamePosition(position, playerTwoPos)) return PLAYERS.PLAYER_2;
+    return null;
   };
 
-  const isCurrentTurn = isCurrentPlayerTurn(turn, player);
-  const canPlace = doesPlayerHaveWalls(player, playerOneWallsLeft, playerTwoWallsLeft) && isCurrentTurn;
-  const placedAndHovered = hovered.concat(placed);
-
   return (
-    <div className={cx(styles.playfield, { [styles.upsideDown]: player === PLAYERS.PLAYER_2 })} style={style}>
-      {grid.map((el, i) => {
-        const position = useMemo(() => getRowCol(i), [i]);
-        const { row, col } = position;
+    <div className={styles.playfield}>
+      {TILES.map((position) => (
+        <Cell
+          key={`${position.row}-${position.col}`}
+          position={position}
+          isFlipped={isFlipped}
+          occupant={getOccupant(position)}
+          goalOf={getGoalOwner(position)}
+          canMoveHere={containsPosition(availableMoves, position)}
+          player={player}
+          onMove={handleMove}
+        />
+      ))}
 
-        const isHovered = containsPosition(hovered, position);
-        const isPlaced = containsPosition(placed, position);
-        const canGoHere = containsPosition(availableMoves, position);
+      <WallLayer positions={placed} isFlipped={isFlipped} variant="placed" />
 
-        const isVertIntersection = isVerticalIntersection(position, placedAndHovered);
-        const isHorIntersection = isHorizontalIntersection(position, placedAndHovered);
+      {wallPreview && (
+        <WallLayer
+          positions={wallPreview.coords}
+          isFlipped={isFlipped}
+          variant={wallPreview.isValid ? 'preview' : 'invalid'}
+        />
+      )}
 
-        const containsPlayerOne = row === playerOnePos.row && col === playerOnePos.col;
-        const containsPlayerTwo = row === playerTwoPos.row && col === playerTwoPos.col;
-
-        return (
-          <PlayfieldElement
-            key={i}
-            type={el}
+      {canPlace &&
+        WALL_SLOTS.map((position) => (
+          <WallSlot
+            key={`${position.row}-${position.col}`}
             position={position}
-            isHovered={isHovered}
-            canPlace={canPlace}
-            isPlaced={isPlaced}
-            onHover={handleHover}
-            containsPlayerOne={containsPlayerOne}
-            containsPlayerTwo={containsPlayerTwo}
-            canGoHere={canGoHere}
-            isCurrentTurn={isCurrentTurn}
-            isVerticalIntersection={isVertIntersection}
-            isHorizontalIntersection={isHorIntersection}
-            sizes={sizes}
+            isFlipped={isFlipped}
+            onHover={handleWallHover}
+            onLeave={handleWallLeave}
+            onSelect={handleWallSelect}
           />
-        );
-      })}
+        ))}
     </div>
   );
 });

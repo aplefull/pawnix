@@ -1,45 +1,53 @@
-@use '@variables' as *;
+.cell {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-cell);
 
-.tile {
-  background-color: $color-main;
-  border-radius: $border-radius-medium;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  &.active {
+  &:enabled {
     cursor: pointer;
+  }
 
-    &.can-go {
-      &::before {
-        content: '';
-        display: block;
-        background-color: $color-light-gray;
-        border-radius: 50%;
-        width: 70%;
-        height: 70%;
-        opacity: 0.2;
-      }
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
 
-      &:hover {
-        &::before {
-          opacity: 0.4;
-        }
-      }
-    }
+  &.goal-one {
+    background-color: color-mix(in srgb, var(--color-player-one) 8%, var(--color-cell));
+  }
+
+  &.goal-two {
+    background-color: color-mix(in srgb, var(--color-player-two) 10%, var(--color-cell));
   }
 }
 
-.player-one {
-  width: 70%;
-  height: 70%;
-  border-radius: $border-radius-round;
-  background-color: $color-white;
+.pawn {
+  width: 68%;
 }
 
-.player-two {
-  width: 70%;
-  height: 70%;
-  border-radius: $border-radius-round;
-  background-color: $color-black;
+.move-hint {
+  width: 30%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-full);
+  opacity: 0.35;
+  transition:
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+
+  .cell:hover &,
+  .cell:focus-visible & {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+}
+
+.hint-one {
+  background-color: var(--color-player-one);
+}
+
+.hint-two {
+  background-color: var(--color-player-two);
 }

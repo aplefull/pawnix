@@ -1,0 +1,18 @@
+.slot {
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+  }
+}
+
+.horizontal::after {
+  inset: -6px 0;
+}
+
+.vertical::after {
+  inset: 0 -6px;
+}

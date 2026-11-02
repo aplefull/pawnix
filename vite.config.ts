@@ -11,8 +11,5 @@ export default defineConfig({
   },
   resolve: {
     tsconfigPaths: true,
-    alias: {
-      '@variables': '/src/css/variables.scss',
-    },
   },
 });

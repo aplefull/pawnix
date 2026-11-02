@@ -1,0 +1,8 @@
+@mixin board-grid {
+  --groove: clamp(6px, calc(var(--board-size) * 0.024), 14px);
+
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr) var(--groove)) minmax(0, 1fr);
+  grid-template-rows: repeat(8, minmax(0, 1fr) var(--groove)) minmax(0, 1fr);
+  padding: var(--groove);
+}

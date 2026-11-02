@@ -5,8 +5,8 @@ import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { PLAYFIELD_SIZE, PLAYERS } from '@constants';
 // REDUX
 import { RootState } from '@redux';
-// COMPONENTS
-import { db } from '@main';
+// SERVICES
+import { db } from '@services';
 // UTILS
 import { logger } from '@utils';
 
@@ -15,7 +15,7 @@ export type Position = {
   col: number;
 };
 
-export type Player = typeof PLAYERS[keyof typeof PLAYERS];
+export type Player = (typeof PLAYERS)[keyof typeof PLAYERS];
 
 export type InitialPlayfieldState = {
   placed: Position[];

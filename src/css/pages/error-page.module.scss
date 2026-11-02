@@ -1,5 +1,29 @@
-.error {
-  font-size: 20px;
+.wrapper {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: var(--space-4);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: min(100%, 420px);
+  padding: var(--space-6);
   text-align: center;
-  padding: 50px 20%;
+}
+
+.title {
+  font-size: var(--font-size-lg);
+}
+
+.message {
+  padding: var(--space-3);
+  background-color: var(--color-bg);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  overflow-wrap: anywhere;
 }

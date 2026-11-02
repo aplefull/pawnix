@@ -1,0 +1,13 @@
+.pawn {
+  display: block;
+  aspect-ratio: 1;
+  border-radius: var(--radius-full);
+}
+
+.player-one {
+  background-color: var(--color-player-one);
+}
+
+.player-two {
+  background-color: var(--color-player-two);
+}
