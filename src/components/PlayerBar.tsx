@@ -1,14 +1,16 @@
 // LIBRARIES
-import cx from 'classnames';
+import cx from 'clsx';
 import { memo } from 'react';
 // REDUX
-import { Player } from '@redux';
+import type { Player } from '@redux';
 // COMPONENTS
 import { Pawn } from '@components';
 // CONSTANTS
 import { WALLS_PER_PLAYER } from '@constants';
 // STYLES
 import styles from '@styles/components/player-bar.module.scss';
+
+const PIPS = Array.from({ length: WALLS_PER_PLAYER }, (_, i) => i);
 
 type TPlayerBarProps = {
   player: Player;
@@ -30,8 +32,8 @@ export const PlayerBar = memo(({ player, isYou, isActive, wallsLeft }: TPlayerBa
 
       <div className={styles.walls} title={`${wallsLeft} walls left`}>
         <div className={styles.pips} aria-hidden>
-          {Array.from({ length: WALLS_PER_PLAYER }, (_, i) => (
-            <span key={i} className={cx(styles.pip, { [styles.used]: i >= wallsLeft })} />
+          {PIPS.map((pip) => (
+            <span key={pip} className={cx(styles.pip, { [styles.used]: pip >= wallsLeft })} />
           ))}
         </div>
         <span className={styles.wallsCount}>{wallsLeft}</span>

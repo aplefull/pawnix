@@ -1,8 +1,8 @@
 // LIBRARIES
-import cx from 'classnames';
+import cx from 'clsx';
 import { memo, useMemo } from 'react';
 // REDUX
-import { Position } from '@redux';
+import type { Position } from '@redux';
 // UTILS
 import { containsPosition, getElementType, getGridPlacement, toDisplayPosition } from '@utils';
 // CONSTANTS

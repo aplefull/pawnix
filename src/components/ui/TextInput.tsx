@@ -1,6 +1,6 @@
 // LIBRARIES
-import cx from 'classnames';
-import { InputHTMLAttributes } from 'react';
+import cx from 'clsx';
+import type { InputHTMLAttributes } from 'react';
 // STYLES
 import styles from '@styles/components/ui/text-input.module.scss';
 

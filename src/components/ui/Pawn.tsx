@@ -1,7 +1,7 @@
 // LIBRARIES
-import cx from 'classnames';
+import cx from 'clsx';
 // REDUX
-import { Player } from '@redux';
+import type { Player } from '@redux';
 // CONSTANTS
 import { PLAYERS } from '@constants';
 // STYLES

@@ -1,6 +1,6 @@
 // LIBRARIES
-import cx from 'classnames';
-import { ButtonHTMLAttributes } from 'react';
+import cx from 'clsx';
+import type { ButtonHTMLAttributes } from 'react';
 // STYLES
 import styles from '@styles/components/ui/button.module.scss';
 

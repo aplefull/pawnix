@@ -9,7 +9,12 @@ import { store } from '@redux';
 import { App } from '@components';
 
 const rootElement = document.getElementById('root');
-const root = createRoot(rootElement!);
+
+if (!rootElement) {
+  throw new Error('Root element not found');
+}
+
+const root = createRoot(rootElement);
 
 // TODO investigate why moving provider inside App breaks hmr
 root.render(

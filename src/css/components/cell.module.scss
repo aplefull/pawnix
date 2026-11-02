@@ -33,9 +33,7 @@
   aspect-ratio: 1;
   border-radius: var(--radius-full);
   opacity: 0.35;
-  transition:
-    opacity var(--transition-fast),
-    transform var(--transition-fast);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
 
   .cell:hover &,
   .cell:focus-visible & {

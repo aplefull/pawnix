@@ -1,6 +1,6 @@
 // LIBRARIES
-import cx from 'classnames';
-import { HTMLAttributes } from 'react';
+import cx from 'clsx';
+import type { HTMLAttributes } from 'react';
 // STYLES
 import styles from '@styles/components/ui/panel.module.scss';
 

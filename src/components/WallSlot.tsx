@@ -1,8 +1,8 @@
 // LIBRARIES
-import cx from 'classnames';
+import cx from 'clsx';
 import { memo } from 'react';
 // REDUX
-import { Position } from '@redux';
+import type { Position } from '@redux';
 // UTILS
 import { getElementType, getGridPlacement } from '@utils';
 // CONSTANTS
@@ -30,7 +30,10 @@ export const WallSlot = memo(({ position, isFlipped, onHover, onLeave, onSelect 
   };
 
   return (
-    <div
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-label="Place wall"
       className={cx(styles.slot, isHorizontal ? styles.horizontal : styles.vertical)}
       style={getGridPlacement(position, isFlipped)}
       onPointerEnter={handlePointerEnter}

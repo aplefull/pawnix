@@ -1,5 +1,5 @@
 // LIBRARIES
-import cx from 'classnames';
+import cx from 'clsx';
 // STYLES
 import styles from '@styles/components/ui/spinner.module.scss';
 

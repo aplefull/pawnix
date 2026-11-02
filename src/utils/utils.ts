@@ -2,9 +2,9 @@
 import path from 'ngraph.path';
 import createGraph from 'ngraph.graph';
 // REDUX
-import { Player, Position } from '@redux';
+import type { Player, Position } from '@redux';
 // CONSTANTS
-import { ELEMENTS, PLAYFIELD_INITIAL_STATE, PLAYFIELD_SIZE, gifs, PLAYERS, TElements } from '@constants';
+import { ELEMENTS, PLAYFIELD_INITIAL_STATE, PLAYFIELD_SIZE, gifs, PLAYERS, type TElements } from '@constants';
 
 const isBetween = (num: number, val1: number, val2: number) => {
   const min = Math.min(val1, val2);
@@ -121,7 +121,7 @@ export const availableMovesWithPlayer = (
 
   if (isEnemyNearby(playerOnePos, playerTwoPos)) {
     const moveDir = getMoveDirection(currentPosition, enemyPosition);
-    let newMove;
+    let newMove: Position;
     switch (moveDir) {
       case 'UP':
         newMove = { row: currentPosition.row - 4, col: currentPosition.col };
@@ -229,15 +229,13 @@ export const isBlockingPath = (
   const playerOneGoal = PLAYFIELD_INITIAL_STATE[0]
     .map((el, i) => (el === ELEMENTS.TILE ? `0-${i}` : null))
     .filter(notNull);
-  const playerTwoGoal = PLAYFIELD_INITIAL_STATE[PLAYFIELD_SIZE].map((el, i) =>
-    el === ELEMENTS.TILE ? `16-${i}` : null
-  ).filter(notNull);
-
-  const allPositions = PLAYFIELD_INITIAL_STATE.map((row, i) =>
-    row.map((el, j) => (el === ELEMENTS.TILE ? { row: i, col: j } : null))
-  )
-    .flat()
+  const playerTwoGoal = PLAYFIELD_INITIAL_STATE[PLAYFIELD_SIZE]
+    .map((el, i) => (el === ELEMENTS.TILE ? `16-${i}` : null))
     .filter(notNull);
+
+  const allPositions = PLAYFIELD_INITIAL_STATE.flatMap((row, i) =>
+    row.map((el, j) => (el === ELEMENTS.TILE ? { row: i, col: j } : null))
+  ).filter(notNull);
 
   const nodes = allPositions.map((pos) => `${pos.row}-${pos.col}`);
 

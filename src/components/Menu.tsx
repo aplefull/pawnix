@@ -1,10 +1,10 @@
 // LIBRARIES
-import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
+import { type ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 // REDUX
-import { Player, selectPlayer, setRoomId, createNewRoom, AppDispatch } from '@redux';
+import { type Player, selectPlayer, setRoomId, createNewRoom, type AppDispatch } from '@redux';
 // COMPONENTS
 import { Button, Panel, Pawn, RoomCode, Spinner, TextInput } from '@components';
 // CONSTANTS

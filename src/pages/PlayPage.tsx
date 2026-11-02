@@ -1,9 +1,9 @@
 // LIBRARIES
-import { Suspense, useEffect } from 'react';
+import { Suspense } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Await, useLoaderData, useNavigate, useParams } from 'react-router';
+import { Await, useLoaderData } from 'react-router';
 // REDUX
-import { Player, restartGame, AppDispatch, RootState } from '@redux';
+import { type Player, restartGame, type AppDispatch, type RootState } from '@redux';
 // UTILS
 import { isCurrentPlayerTurn, logger } from '@utils';
 // COMPONENTS
@@ -63,16 +63,7 @@ const Game = () => {
 };
 
 export const PlayPage = () => {
-  const { player } = useSelector((state: RootState) => state.playfield);
-  const navigate = useNavigate();
-  const params = useParams();
   const data = useLoaderData();
-
-  useEffect(() => {
-    if (!params.player && player) {
-      navigate(`/play/${params.roomId}/${player}`);
-    }
-  }, []);
 
   if (!data || typeof data !== 'object' || !('promise' in data)) {
     logger.error('useLoaderData returned invalid data', data);

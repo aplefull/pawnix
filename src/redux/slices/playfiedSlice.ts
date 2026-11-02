@@ -4,7 +4,7 @@ import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 // CONSTANTS
 import { PLAYFIELD_SIZE, PLAYERS } from '@constants';
 // REDUX
-import { RootState } from '@redux';
+import type { RootState } from '@redux';
 // SERVICES
 import { db } from '@services';
 // UTILS

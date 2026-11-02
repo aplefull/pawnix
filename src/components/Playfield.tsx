@@ -2,7 +2,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 // REDUX
-import { move, place, AppDispatch, Player, Position, RootState } from '@redux';
+import { move, place, type AppDispatch, type Player, type Position, type RootState } from '@redux';
 // UTILS
 import {
   availableMovesWithPlayer,
