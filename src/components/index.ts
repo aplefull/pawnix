@@ -3,6 +3,8 @@ export * from './App';
 export * from './GameMenu';
 export * from './GamePicker';
 export * from './JoinRoom';
+export * from './NameField';
+export * from './NamePrompt';
 export * from './Routes';
 export * from './Gif';
 export * from './WaitingPanel';

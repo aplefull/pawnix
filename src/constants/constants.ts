@@ -20,6 +20,10 @@ export const ROOM_TTL_DAYS = 7;
 
 export const SITE_NAME = 'Board Games';
 
+export const NAME_MAX_LENGTH = 20;
+
+export const NAME_STORAGE_KEY = 'player-name';
+
 export const MENU_STATES = {
   INITIAL: 'INITIAL',
   CREATE_ROOM: 'CREATE_ROOM',

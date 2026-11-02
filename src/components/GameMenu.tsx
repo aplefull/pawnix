@@ -4,11 +4,13 @@ import { useNavigate } from 'react-router';
 // GAMES
 import type { GameEntry, GameModule, TCreateRoomOptions } from '@games';
 // COMPONENTS
-import { Button, JoinRoom, Panel, Spinner } from '@components';
+import { Button, JoinRoom, NameField, Panel, Spinner } from '@components';
+// HOOKS
+import { usePlayerName } from '@hooks';
 // CONSTANTS
 import { MENU_STATES } from '@constants';
 // UTILS
-import { logger } from '@utils';
+import { getStoredName, logger } from '@utils';
 // SERVICES
 import { createRoom } from '@services';
 // STYLES
@@ -37,7 +39,7 @@ const CreateRoomStep = ({ game, gameModule }: TGameMenuProps) => {
     setError(null);
 
     try {
-      const roomId = await createRoom({ game: game.id, seats: game.seats, seat, state });
+      const roomId = await createRoom({ game: game.id, seats: game.seats, seat, name: getStoredName(), state });
       navigate(`/play/${roomId}`);
     } catch (err) {
       logger.error(err);
@@ -63,19 +65,32 @@ const CreateRoomStep = ({ game, gameModule }: TGameMenuProps) => {
   );
 };
 
+const MenuActions = ({ handleStateChange }: Pick<TMenuContentSwitchProps, 'handleStateChange'>) => {
+  const { name, setName, isValid } = usePlayerName();
+
+  return (
+    <div className={styles.actions}>
+      <NameField value={name} onChange={setName} />
+      <Button size="lg" fullWidth disabled={!isValid} onClick={() => handleStateChange(MENU_STATES.CREATE_ROOM)}>
+        Create room
+      </Button>
+      <Button
+        size="lg"
+        variant="secondary"
+        fullWidth
+        disabled={!isValid}
+        onClick={() => handleStateChange(MENU_STATES.JOIN_ROOM)}
+      >
+        Join room
+      </Button>
+    </div>
+  );
+};
+
 const MenuContentSwitch = memo(({ game, gameModule, menuState, handleStateChange }: TMenuContentSwitchProps) => {
   switch (menuState) {
     case MENU_STATES.INITIAL:
-      return (
-        <div className={styles.actions}>
-          <Button size="lg" fullWidth onClick={() => handleStateChange(MENU_STATES.CREATE_ROOM)}>
-            Create room
-          </Button>
-          <Button size="lg" variant="secondary" fullWidth onClick={() => handleStateChange(MENU_STATES.JOIN_ROOM)}>
-            Join room
-          </Button>
-        </div>
-      );
+      return <MenuActions handleStateChange={handleStateChange} />;
 
     case MENU_STATES.CREATE_ROOM:
       return <CreateRoomStep game={game} gameModule={gameModule} />;

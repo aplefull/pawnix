@@ -58,11 +58,13 @@
 }
 
 .code-input input {
+  font-family: var(--font-mono);
   font-size: var(--font-size-md);
   letter-spacing: 0.15em;
   text-transform: uppercase;
 
   &::placeholder {
+    font-family: var(--font-sans);
     letter-spacing: normal;
     text-transform: none;
   }

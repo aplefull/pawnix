@@ -42,12 +42,13 @@ const EndScreen = ({ winner, player }: TEndScreenProps) => {
 };
 
 export const Game = () => {
-  const { winner, turn, player, players, roomId, playerOneWallsLeft, playerTwoWallsLeft } = useQuoridor(
+  const { winner, turn, player, players, names, roomId, playerOneWallsLeft, playerTwoWallsLeft } = useQuoridor(
     useShallow((state) => ({
       winner: state.winner,
       turn: state.turn,
       player: state.player,
       players: state.players,
+      names: state.names,
       roomId: state.roomId,
       playerOneWallsLeft: state.playerOneWallsLeft,
       playerTwoWallsLeft: state.playerTwoWallsLeft,
@@ -65,6 +66,7 @@ export const Game = () => {
     <div className={styles.page}>
       <PlayerBar
         player={opponent}
+        name={names[opponent]}
         isYou={false}
         isActive={!isWaiting && !winner && !isYourTurn}
         wallsLeft={opponentWalls}
@@ -78,7 +80,13 @@ export const Game = () => {
         )}
         {winner && <EndScreen winner={winner} player={player} />}
       </div>
-      <PlayerBar player={player} isYou isActive={!isWaiting && !winner && isYourTurn} wallsLeft={ownWalls} />
+      <PlayerBar
+        player={player}
+        name={names[player]}
+        isYou
+        isActive={!isWaiting && !winner && isYourTurn}
+        wallsLeft={ownWalls}
+      />
     </div>
   );
 };

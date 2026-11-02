@@ -37,11 +37,15 @@ const db = (uid: string) => env.authenticatedContext(uid).firestore();
 const room = (uid: string, roomId = ROOM_ID) => doc(db(uid), 'rooms', roomId);
 const expiresIn = (days: number) => Timestamp.fromMillis(Date.now() + days * DAY_MS);
 
+const namesFor = (players: Record<string, string | null>) =>
+  Object.fromEntries(Object.entries(players).map(([seat, uid]) => [seat, uid && uid[0].toUpperCase() + uid.slice(1)]));
+
 const seed = (players: Record<string, string | null>, state: Record<string, unknown> = {}) =>
   env.withSecurityRulesDisabled(async (context) => {
     await setDoc(doc(context.firestore(), 'rooms', ROOM_ID), {
       game: 'quoridor',
       players,
+      names: namesFor(players),
       state: { ...INITIAL_GAME, ...state },
       createdAt: new Date(),
       expiresAt: expiresIn(7),
@@ -89,6 +93,7 @@ describe('creating a room', () => {
   const newRoom = (players: Record<string, string | null>, overrides: Record<string, unknown> = {}) => ({
     game: 'quoridor',
     players,
+    names: namesFor(players),
     state: INITIAL_GAME,
     createdAt: serverTimestamp(),
     expiresAt: expiresIn(7),
@@ -140,6 +145,21 @@ describe('creating a room', () => {
     await assertFails(setDoc(room('alice'), newRoom(players, { expiresAt: null })));
   });
 
+  it('requires a valid name on the creator seat only', async () => {
+    const players = { One: 'alice', Two: null };
+
+    const { names: _, ...withoutNames } = newRoom(players);
+    await assertFails(setDoc(room('alice'), withoutNames));
+    await assertFails(setDoc(room('alice'), newRoom(players, { names: { One: null, Two: null } })));
+    await assertFails(setDoc(room('alice'), newRoom(players, { names: { One: 'Alice', Two: 'Bob' } })));
+    await assertFails(setDoc(room('alice'), newRoom(players, { names: { One: 'Alice' } })));
+    await assertFails(setDoc(room('alice'), newRoom(players, { names: { One: '', Two: null } })));
+    await assertFails(setDoc(room('alice'), newRoom(players, { names: { One: ' Alice', Two: null } })));
+    await assertFails(setDoc(room('alice'), newRoom(players, { names: { One: 'A'.repeat(21), Two: null } })));
+    await assertFails(setDoc(room('alice'), newRoom(players, { names: { One: 42, Two: null } })));
+    await assertSucceeds(setDoc(room('alice'), newRoom(players, { names: { One: 'A'.repeat(20), Two: null } })));
+  });
+
   it('does not let anyone overwrite an existing room', async () => {
     await seedGame();
     await assertFails(setDoc(room('carol'), newRoom({ One: 'carol', Two: null })));
@@ -152,35 +172,50 @@ describe('creating a room', () => {
 });
 
 describe('claiming a seat', () => {
+  const claim = (uid: string, seat: string, name: unknown, extra: Record<string, unknown> = {}) =>
+    updateDoc(room(uid), { [`players.${seat}`]: uid, [`names.${seat}`]: name, ...extra });
+
   beforeEach(async () => {
     await seed({ One: 'alice', Two: null });
   });
 
-  it('lets a new user take the free seat', async () => {
-    await assertSucceeds(updateDoc(room('bob'), { 'players.Two': 'bob' }));
+  it('lets a new user take the free seat with a name', async () => {
+    await assertSucceeds(claim('bob', 'Two', 'Bob'));
+  });
+
+  it('requires a valid name when claiming', async () => {
+    await assertFails(updateDoc(room('bob'), { 'players.Two': 'bob' }));
+    await assertFails(claim('bob', 'Two', ''));
+    await assertFails(claim('bob', 'Two', ' Bob'));
+    await assertFails(claim('bob', 'Two', 'B'.repeat(21)));
+    await assertFails(claim('bob', 'Two', null));
+  });
+
+  it('does not allow renaming the other player while claiming', async () => {
+    await assertFails(claim('bob', 'Two', 'Bob', { 'names.One': 'Mallory' }));
   });
 
   it('does not let a seated player take the second seat', async () => {
-    await assertFails(updateDoc(room('alice'), { 'players.Two': 'alice' }));
+    await assertFails(claim('alice', 'Two', 'Alice'));
   });
 
   it('does not let anyone take an occupied seat', async () => {
-    await assertFails(updateDoc(room('bob'), { 'players.One': 'bob' }));
+    await assertFails(claim('bob', 'One', 'Bob'));
   });
 
   it('does not let anyone join a full room', async () => {
-    await assertSucceeds(updateDoc(room('bob'), { 'players.Two': 'bob' }));
-    await assertFails(updateDoc(room('carol'), { 'players.Two': 'carol' }));
+    await assertSucceeds(claim('bob', 'Two', 'Bob'));
+    await assertFails(claim('carol', 'Two', 'Carol'));
   });
 
   it('does not allow adding seats or seating someone else', async () => {
-    await assertFails(updateDoc(room('bob'), { 'players.Three': 'bob' }));
-    await assertFails(updateDoc(room('bob'), { 'players.Two': 'carol' }));
+    await assertFails(claim('bob', 'Three', 'Bob'));
+    await assertFails(updateDoc(room('bob'), { 'players.Two': 'carol', 'names.Two': 'Carol' }));
   });
 
   it('does not allow changing the game while claiming', async () => {
-    await assertFails(updateDoc(room('bob'), { 'players.Two': 'bob', 'state.turn': 'Two' }));
-    await assertFails(updateDoc(room('bob'), { 'players.Two': 'bob', game: 'chess' }));
+    await assertFails(claim('bob', 'Two', 'Bob', { 'state.turn': 'Two' }));
+    await assertFails(claim('bob', 'Two', 'Bob', { game: 'chess' }));
   });
 });
 

@@ -15,9 +15,10 @@ import styles from '@styles/components/menu.module.scss';
 type TJoinRoomProps = {
   label?: string;
   autoFocus?: boolean;
+  disabled?: boolean;
 };
 
-export const JoinRoom = ({ label = 'Room code', autoFocus = false }: TJoinRoomProps) => {
+export const JoinRoom = ({ label = 'Room code', autoFocus = false, disabled = false }: TJoinRoomProps) => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -58,7 +59,7 @@ export const JoinRoom = ({ label = 'Room code', autoFocus = false }: TJoinRoomPr
     <div className={styles.section}>
       <TextInput
         label={label}
-        placeholder="Enter the room code"
+        placeholder={disabled ? 'Enter your name first' : 'Enter the room code'}
         autoComplete="off"
         autoCapitalize="characters"
         spellCheck={false}
@@ -66,7 +67,7 @@ export const JoinRoom = ({ label = 'Room code', autoFocus = false }: TJoinRoomPr
         className={styles.codeInput}
         autoFocus={autoFocus}
         onChange={handleCodeInput}
-        disabled={loading}
+        disabled={disabled || loading}
         error={error}
       />
       {loading && (

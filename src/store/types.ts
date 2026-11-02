@@ -6,6 +6,7 @@ export type Seats = Record<string, string | null>;
 export type RoomDoc<TState = unknown> = {
   game: string;
   players: Seats;
+  names: Seats;
   state: TState;
   createdAt: Timestamp;
   expiresAt: Timestamp;

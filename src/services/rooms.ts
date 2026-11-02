@@ -15,7 +15,7 @@ import type { RoomDoc } from '@store';
 // CONSTANTS
 import { ROOM_CODE_ATTEMPTS, ROOM_TTL_DAYS } from '@constants';
 // UTILS
-import { generateRoomCode, getFreeSeat, getSeatOf } from '@utils';
+import { generateRoomCode, getFreeSeat, getSeatOf, isValidName, normalizeName } from '@utils';
 // SERVICES
 import { db, ensureSignedIn } from './firebase';
 
@@ -23,16 +23,28 @@ type TCreateRoomOptions<TState> = {
   game: string;
   seats: readonly string[];
   seat: string;
+  name: string;
   state: TState;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+export class NameRequiredError extends Error {
+  game: string;
+
+  constructor(game: string) {
+    super('A name is required to join this room.');
+    this.name = 'NameRequiredError';
+    this.game = game;
+  }
+}
+
 const getRoomRef = (roomId: string) => doc(db, 'rooms', roomId);
 
-export const createRoom = async <TState>({ game, seats, seat, state }: TCreateRoomOptions<TState>) => {
+export const createRoom = async <TState>({ game, seats, seat, name, state }: TCreateRoomOptions<TState>) => {
   const user = await ensureSignedIn();
   const players = Object.fromEntries(seats.map((value) => [value, value === seat ? user.uid : null]));
+  const names = Object.fromEntries(seats.map((value) => [value, value === seat ? normalizeName(name) : null]));
 
   for (let attempt = 0; attempt < ROOM_CODE_ATTEMPTS; attempt++) {
     const roomId = generateRoomCode();
@@ -46,6 +58,7 @@ export const createRoom = async <TState>({ game, seats, seat, state }: TCreateRo
       transaction.set(roomRef, {
         game,
         players,
+        names,
         state,
         createdAt: serverTimestamp(),
         expiresAt: Timestamp.fromMillis(Date.now() + ROOM_TTL_DAYS * DAY_MS),
@@ -66,7 +79,7 @@ export const fetchRoom = async (roomId: string) => {
   return docSnap.exists() ? (docSnap.data() as RoomDoc) : null;
 };
 
-export const claimSeat = (roomId: string, uid: string) => {
+export const claimSeat = (roomId: string, uid: string, name: string) => {
   const roomRef = getRoomRef(roomId);
 
   return runTransaction(db, async (transaction) => {
@@ -76,7 +89,7 @@ export const claimSeat = (roomId: string, uid: string) => {
       throw new Error(`Room ${roomId} does not exist`);
     }
 
-    const { players } = docSnap.data() as RoomDoc;
+    const { game, players } = docSnap.data() as RoomDoc;
 
     const ownSeat = getSeatOf(players, uid);
     if (ownSeat) return ownSeat;
@@ -84,7 +97,9 @@ export const claimSeat = (roomId: string, uid: string) => {
     const freeSeat = getFreeSeat(players);
     if (!freeSeat) throw new Error('This room is full. All seats are already taken.');
 
-    transaction.update(roomRef, { [`players.${freeSeat}`]: uid });
+    if (!isValidName(name)) throw new NameRequiredError(game);
+
+    transaction.update(roomRef, { [`players.${freeSeat}`]: uid, [`names.${freeSeat}`]: normalizeName(name) });
     return freeSeat;
   });
 };

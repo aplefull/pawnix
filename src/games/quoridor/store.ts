@@ -14,6 +14,7 @@ type QuoridorView = GameState & {
   roomId: string | null;
   player: Player;
   players: Players;
+  names: Players;
 };
 
 const toView = ({ roomId, seat, room }: RoomStore): QuoridorView => ({
@@ -21,6 +22,7 @@ const toView = ({ roomId, seat, room }: RoomStore): QuoridorView => ({
   roomId,
   player: (seat as Player | null) ?? PLAYERS.PLAYER_1,
   players: (room?.players as Players | undefined) ?? EMPTY_SEATS,
+  names: (room?.names as Players | undefined) ?? EMPTY_SEATS,
 });
 
 const getView = () => toView(useRoomStore.getState());

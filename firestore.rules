@@ -22,8 +22,30 @@ service cloud.firestore {
         return players.values().removeAll([null]).size();
       }
 
-      function hasSeats(players, seats) {
-        return players.keys().hasOnly(seats) && players.keys().hasAll(seats);
+      function seatsOf(game) {
+        return game == 'quoridor' ? ['One', 'Two'] : [];
+      }
+
+      function hasSeats(value, seats) {
+        return value is map && value.keys().hasOnly(seats) && value.keys().hasAll(seats);
+      }
+
+      function isName(name) {
+        return name is string && name.size() > 0 && name.size() <= 20 && name == name.trim();
+      }
+
+      function isSeatNamed(data, seat) {
+        return data.players[seat] == null ? data.names[seat] == null : isName(data.names[seat]);
+      }
+
+      function hasNamedSeats(data) {
+        let seats = seatsOf(data.game);
+
+        return seats.size() == 2
+          && hasSeats(data.players, seats)
+          && hasSeats(data.names, seats)
+          && isSeatNamed(data, seats[0])
+          && isSeatNamed(data, seats[1]);
       }
 
       function isNewGame(data) {
@@ -38,12 +60,12 @@ service cloud.firestore {
         let data = request.resource.data;
 
         return roomId.matches('^[A-HJKMNP-Z2-9]{6}$')
-          && data.keys().hasOnly(['game', 'players', 'state', 'createdAt', 'expiresAt'])
+          && data.keys().hasOnly(['game', 'players', 'names', 'state', 'createdAt', 'expiresAt'])
           && data.createdAt == request.time
           && data.expiresAt is timestamp
           && data.expiresAt > request.time
           && data.expiresAt < request.time + duration.value(8, 'd')
-          && data.players is map
+          && hasNamedSeats(data)
           && data.players.values().removeAll([null]) == [uid()]
           && isNewGame(data);
       }
@@ -53,13 +75,15 @@ service cloud.firestore {
         let after = request.resource.data.players;
         let seats = after.diff(before);
 
-        return changedKeys().hasOnly(['players'])
+        return changedKeys().hasOnly(['players', 'names'])
           && !isSeated(before)
           && seats.addedKeys().size() == 0
           && seats.removedKeys().size() == 0
           && seats.changedKeys().size() == 1
           && after.values().removeAll(before.values()) == [uid()]
-          && occupiedCount(after) == occupiedCount(before) + 1;
+          && occupiedCount(after) == occupiedCount(before) + 1
+          && request.resource.data.names.diff(resource.data.names).affectedKeys() == seats.affectedKeys()
+          && hasNamedSeats(request.resource.data);
       }
 
       function isUpdatingState() {
@@ -88,7 +112,7 @@ service cloud.firestore {
       }
 
       function quoridorIsNewRoom(data) {
-        return hasSeats(data.players, ['One', 'Two']) && quoridorIsInitial(data.state);
+        return quoridorIsInitial(data.state);
       }
 
       function quoridorOpponentOf(seat) {

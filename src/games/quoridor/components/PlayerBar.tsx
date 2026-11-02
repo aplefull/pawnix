@@ -14,19 +14,22 @@ const PIPS = Array.from({ length: WALLS_PER_PLAYER }, (_, i) => i);
 
 type TPlayerBarProps = {
   player: Player;
+  name: string | null;
   isYou: boolean;
   isActive: boolean;
   wallsLeft: number;
 };
 
-export const PlayerBar = memo(({ player, isYou, isActive, wallsLeft }: TPlayerBarProps) => {
+export const PlayerBar = memo(({ player, name, isYou, isActive, wallsLeft }: TPlayerBarProps) => {
   const turnText = isYou ? 'Your turn' : 'Their turn';
+  const fallbackName = isYou ? 'You' : 'Opponent';
 
   return (
     <div className={cx(styles.bar, { [styles.active]: isActive })}>
       <Pawn player={player} className={styles.pawn} />
 
-      <span className={styles.name}>{isYou ? 'You' : 'Opponent'}</span>
+      <span className={styles.name}>{name ?? fallbackName}</span>
+      {isYou && name && <span className={styles.you}>you</span>}
 
       {isActive && <span className={styles.turn}>{turnText}</span>}
 

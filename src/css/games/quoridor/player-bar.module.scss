@@ -20,7 +20,17 @@
 }
 
 .name {
+  min-width: 0;
+  overflow: hidden;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.you {
+  margin-left: calc(var(--space-2) * -1);
+  color: var(--color-text-faint);
+  font-size: var(--font-size-sm);
 }
 
 .turn {
