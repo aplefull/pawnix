@@ -1,5 +1,6 @@
 // LIBRARIES
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 // STORE
 import type { Seats } from '@store';
 import { restartGame } from '../store';
@@ -25,6 +26,8 @@ const getResult = (own: number, other: number) => {
 };
 
 export const EndScreen = ({ seat, names, scores }: TEndScreenProps) => {
+  const navigate = useNavigate();
+
   const [restarting, setRestarting] = useState(false);
 
   const opponent = getOtherSeat(seat);
@@ -42,6 +45,10 @@ export const EndScreen = ({ seat, names, scores }: TEndScreenProps) => {
     }
   };
 
+  const handleHome = () => {
+    navigate('/');
+  };
+
   return (
     <Panel className={styles.endScreen}>
       <h2 className={styles.result}>{getResult(own, other)}</h2>
@@ -51,6 +58,9 @@ export const EndScreen = ({ seat, names, scores }: TEndScreenProps) => {
       <Gif isWinner={own >= other} />
       <Button size="lg" fullWidth disabled={restarting} onClick={handleRestart}>
         Rematch
+      </Button>
+      <Button variant="secondary" size="lg" fullWidth onClick={handleHome}>
+        Home
       </Button>
     </Panel>
   );

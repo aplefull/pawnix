@@ -1,4 +1,5 @@
 // LIBRARIES
+import { useNavigate } from 'react-router';
 import { useShallow } from 'zustand/shallow';
 // COMPONENTS
 import { Button, Gif, Panel, WaitingPanel } from '@components';
@@ -21,10 +22,16 @@ type TEndScreenProps = {
 };
 
 const EndScreen = ({ winner, player }: TEndScreenProps) => {
+  const navigate = useNavigate();
+
   const isWinner = winner === player;
 
   const handleRestart = () => {
     restartGame();
+  };
+
+  const handleHome = () => {
+    navigate('/');
   };
 
   return (
@@ -35,6 +42,9 @@ const EndScreen = ({ winner, player }: TEndScreenProps) => {
         <Gif isWinner={isWinner} />
         <Button size="lg" fullWidth onClick={handleRestart}>
           Rematch
+        </Button>
+        <Button variant="secondary" size="lg" fullWidth onClick={handleHome}>
+          Home
         </Button>
       </Panel>
     </div>

@@ -1,6 +1,8 @@
 // LIBRARIES
 import cx from 'clsx';
 import { memo } from 'react';
+// COMPONENTS
+import { Icon } from '@components';
 // TYPES
 import type { Pairing } from '../types';
 // STYLES
@@ -16,8 +18,22 @@ type TRevealListProps = {
 
 const getVerdict = (pick: number | null, isCorrect: boolean, adjectives: string[], guesserName: string) => {
   if (pick === null) return '...';
-  if (isCorrect) return '✓ Guessed';
-  return `✗ ${guesserName} picked ${adjectives[pick]}`;
+
+  if (isCorrect) {
+    return (
+      <>
+        <Icon name="check" />
+        Guessed
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Icon name="cross" />
+      {guesserName} picked {adjectives[pick]}
+    </>
+  );
 };
 
 export const RevealList = memo(({ nouns, adjectives, pairing, guess, guesserName }: TRevealListProps) => {

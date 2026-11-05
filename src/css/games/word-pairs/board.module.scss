@@ -41,9 +41,8 @@
     box-shadow: var(--focus-ring);
   }
 
-  &.selected {
+  &.targetable:hover:enabled {
     border-color: var(--color-accent);
-    background-color: var(--color-surface-hover);
   }
 }
 
@@ -57,6 +56,11 @@
   font-size: var(--font-size-sm);
   text-align: center;
   white-space: nowrap;
+}
+
+.targetable .slot {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .paired .slot,
@@ -111,6 +115,13 @@
   &.used {
     opacity: 0.4;
   }
+
+  &.selected {
+    border-color: var(--color-accent);
+    background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+    color: var(--color-accent);
+    opacity: 1;
+  }
 }
 
 .reveal-row {
@@ -133,8 +144,15 @@
 }
 
 .verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   font-size: var(--font-size-sm);
   font-weight: 600;
+
+  svg {
+    flex-shrink: 0;
+  }
 }
 
 .correct {
